@@ -6,22 +6,8 @@ import (
 	"io"
 	"os"
 	"sync"
-)
 
-// TextAttribute describes foreground, and background colors and optionally intensity
-type TextAttribute uint16
-
-const (
-	ForegroundBlue TextAttribute = 1  
-	ForegroundGreen = ForegroundBlue << 1
-	ForegroundRed = ForegroundGreen << 1 
-	ForegroundIntensity = ForegroundRed << 1 
-	BackgroundBlue = ForegroundIntensity << 1 
-	BackgroundGreen = BackgroundBlue << 1
-	BackgroundRed = BackgroundGreen << 1 
-	BackgroundIntensity = BackgroundRed << 1 
-	BlackForegroundWhiteBackground = BackgroundBlue | BackgroundGreen | BackgroundRed
-	WhiteForegroundBlackBackground = ForegroundBlue | ForegroundGreen | ForegroundRed
+	"github.com/mattn/go-colorable"
 )
 
 type consoleType int 
@@ -46,18 +32,27 @@ var stdoutOnce sync.Once
 func Stdout() *Console {
 	stdoutOnce.Do(func(){
 		stdout = &Console{
-			out: os.Stdout,
+			out: colorable.NewColorableStdout(),
 			typ: typeStdout,
 		}
 	})
 	return stdout 
 }
 
+var stderr *Console 
+var stderrOnce sync.Once 
+
+func Stderr() *Console {
+	stderrOnce.Do(func(){
+		stderr = &Console{
+			out: colorable.NewColorableStderr(), 
+			typ: typeStderr,
+		}
+	})
+}
+
 func(c *Console) Println(attr TextAttribute, a ...interface{})(int, error){
-	if err := c.set(attr); err != nil {
-		return 0, err 
-	}
-	defer reset(c)
+
 	return fmt.Fprintln(c.out, a...)
 }
 
