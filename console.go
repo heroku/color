@@ -50,9 +50,16 @@ func(c *Console) StripColors(strip bool) {
 	c.colorable = colorable.NewColorable(c.out)
 }
 
-// Writer so we can treat a console as a Writer
+// Write so we can treat a console as a Writer
 func(c *Console) Write(b []byte)(int, error) {
+	c.Lock()
+	defer c.Unlock()
 	return c.colorable.Write(b)
 }
 
 
+type valueMap map[Attribute]*Value
+
+type valueCache struct {
+	
+}
