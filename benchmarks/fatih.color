@@ -1,0 +1,45 @@
+darwin
+goarch: amd64
+pkg: github.com/fatih/color
+BenchmarkColorFuncs             	  632098	      2182 ns/op
+BenchmarkColorFuncs             	  639008	      2125 ns/op
+BenchmarkColorFuncs             	  655300	      2149 ns/op
+BenchmarkColorFuncs             	  657531	      2135 ns/op
+BenchmarkColorFuncs             	  646029	      2180 ns/op
+BenchmarkColorFuncs-2           	  659314	      1850 ns/op
+BenchmarkColorFuncs-2           	  669032	      1870 ns/op
+BenchmarkColorFuncs-2           	  639082	      1866 ns/op
+BenchmarkColorFuncs-2           	  650202	      1870 ns/op
+BenchmarkColorFuncs-2           	  661885	      1866 ns/op
+BenchmarkColorFuncs-4           	  669283	      1869 ns/op
+BenchmarkColorFuncs-4           	  657144	      1860 ns/op
+BenchmarkColorFuncs-4           	  654512	      1862 ns/op
+BenchmarkColorFuncs-4           	  665701	      1867 ns/op
+BenchmarkColorFuncs-4           	  661765	      1871 ns/op
+BenchmarkColorFuncs-8           	  633403	      1867 ns/op
+BenchmarkColorFuncs-8           	  613084	      1855 ns/op
+BenchmarkColorFuncs-8           	  654099	      1860 ns/op
+BenchmarkColorFuncs-8           	  659329	      1865 ns/op
+BenchmarkColorFuncs-8           	  661524	      1851 ns/op
+BenchmarkColorFuncsParallel     	  255625	      5003 ns/op
+BenchmarkColorFuncsParallel     	  267260	      5130 ns/op
+BenchmarkColorFuncsParallel     	  256561	      5074 ns/op
+BenchmarkColorFuncsParallel     	  259317	      5066 ns/op
+BenchmarkColorFuncsParallel     	  238401	      5011 ns/op
+BenchmarkColorFuncsParallel-2   	  423394	      2748 ns/op
+BenchmarkColorFuncsParallel-2   	  535354	      2665 ns/op
+BenchmarkColorFuncsParallel-2   	  536521	      2586 ns/op
+BenchmarkColorFuncsParallel-2   	  410144	      2811 ns/op
+BenchmarkColorFuncsParallel-2   	  415519	      2525 ns/op
+BenchmarkColorFuncsParallel-4   	  842187	      1758 ns/op
+BenchmarkColorFuncsParallel-4   	  781617	      1887 ns/op
+BenchmarkColorFuncsParallel-4   	  728494	      1723 ns/op
+BenchmarkColorFuncsParallel-4   	  838519	      1859 ns/op
+BenchmarkColorFuncsParallel-4   	  619886	      1915 ns/op
+BenchmarkColorFuncsParallel-8   	  696612	      1959 ns/op
+BenchmarkColorFuncsParallel-8   	  664118	      1995 ns/op
+BenchmarkColorFuncsParallel-8   	  679089	      1813 ns/op
+BenchmarkColorFuncsParallel-8   	  742450	      1766 ns/op
+BenchmarkColorFuncsParallel-8   	  683516	      1898 ns/op
+PASS
+ok  	github.com/fatih/color	52.592s

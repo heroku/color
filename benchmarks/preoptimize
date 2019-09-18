@@ -1,5 +1,3 @@
-go test -v -bench=. -count=5  -cpu=1,2,4,8 -cpuprofile=cpu.prof github.com/murphybytes/color > no.cache
-
 goos: darwin
 goarch: amd64
 pkg: github.com/murphybytes/color

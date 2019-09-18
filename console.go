@@ -75,6 +75,13 @@ type valueCache struct {
 	parent io.Writer
 }
 
+func newValueCache(w io.Writer) *valueCache {
+	return &valueCache{
+		cache:   make(valueMap),
+		parent:  w,
+	}
+}
+
 func (vc *valueCache) value(attr Attribute) *Value {
 	if v := vc.getIfExists(attr); v != nil {
 		return v

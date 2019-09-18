@@ -1,12 +1,66 @@
 package color
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // Attribute defines a single SGR Code
 type Attribute int
 
 func (a Attribute) String() string {
 	return strconv.Itoa(int(a))
+}
+
+func(a Attribute) Name() string {
+	m := map[Attribute]string {
+		Reset: "Reset",
+		Bold: "Bold",
+		Faint: "Faint",
+		Italic: "Italic",
+		Underline: "Underline",
+		BlinkSlow: "BlinkSlow",
+		BlinkRapid: "BlinkRapid",
+		ReverseVideo: "ReverseVideo",
+		Concealed: "Concealed",
+		CrossedOut: "CrossedOut",
+		FgBlack: "FgBlack",
+		FgRed: "FgRed",
+		FgGreen: "FgGreen",
+		FgYellow: "FgYellow",
+		FgBlue: "FgBlue",
+		FgMagenta: "FgMagenta",
+		FgCyan: "FgCyan",
+		FgWhite: "FgWhite",
+		FgHiBlack: "FgHiBlack",
+		FgHiRed: "FgHiRed",
+		FgHiGreen: "FgHiGreen",
+		FgHiYellow: "FgHiYellow",
+		FgHiBlue: "FgHiBlue",
+		FgHiMagenta: "FgHiMagenta",
+		FgHiCyan: "FgHiCyan",
+		FgHiWhite: "FgHiWhite",
+		BgBlack: "BgBlack",
+		BgRed: "BgRed",
+		BgGreen: "BgGreen",
+		BgYellow: "BgYellow",
+		BgBlue: "BgBlue",
+		BgMagenta: "BgMagenta",
+		BgCyan: "BgCyan",
+		BgWhite: "BgWhite",
+		BgHiBlack: "BgHiBlack",
+		BgHiRed: "BgHiRed",
+		BgHiGreen: "BgHiGreen",
+		BgHiYellow: "BgHiYellow",
+		BgHiBlue: "BgHiBlue",
+		BgHiMagenta: "BgHiMagenta",
+		BgHiCyan: "BgHiCyan",
+		BgHiWhite: "BgHiWhite",
+	}
+	if s, ok := m[a]; ok {
+		return s
+	}
+	return fmt.Sprintf("unknown color %q", a)
 }
 
 // Base attributes

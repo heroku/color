@@ -12,4 +12,7 @@ func main() {
 	//vv := v.Add(color.Underline)
 	//vv.Print("something new\n")
 	v.Print("something old\n")
+
+	color.HiMagenta("hello megenta %s", "foo")
+	color.HiCyan("hello cyan %d", 10)
 }
