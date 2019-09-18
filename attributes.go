@@ -5,7 +5,7 @@ import "strconv"
 // Attribute defines a single SGR Code
 type Attribute int
 
-func(a Attribute) String() string {
+func (a Attribute) String() string {
 	return strconv.Itoa(int(a))
 }
 

@@ -1,0 +1,47 @@
+go test -v -bench=. -count=5  -cpu=1,2,4,8 -cpuprofile=cpu.prof github.com/murphybytes/color > with.cache
+
+goos: darwin
+goarch: amd64
+pkg: github.com/murphybytes/color
+BenchmarkColorFuncs             	   27254	     44181 ns/op
+BenchmarkColorFuncs             	   27138	     45660 ns/op
+BenchmarkColorFuncs             	   26956	     44840 ns/op
+BenchmarkColorFuncs             	   26924	     44036 ns/op
+BenchmarkColorFuncs             	   27628	     44491 ns/op
+BenchmarkColorFuncs-2           	   67544	     18303 ns/op
+BenchmarkColorFuncs-2           	   64749	     18394 ns/op
+BenchmarkColorFuncs-2           	   64922	     18995 ns/op
+BenchmarkColorFuncs-2           	   65713	     18896 ns/op
+BenchmarkColorFuncs-2           	   60674	     19237 ns/op
+BenchmarkColorFuncs-4           	   84630	     13980 ns/op
+BenchmarkColorFuncs-4           	   83965	     14118 ns/op
+BenchmarkColorFuncs-4           	   86150	     14178 ns/op
+BenchmarkColorFuncs-4           	   84920	     14105 ns/op
+BenchmarkColorFuncs-4           	   84134	     14570 ns/op
+BenchmarkColorFuncs-8           	   85526	     13785 ns/op
+BenchmarkColorFuncs-8           	   89360	     14226 ns/op
+BenchmarkColorFuncs-8           	   87860	     13685 ns/op
+BenchmarkColorFuncs-8           	   85728	     13846 ns/op
+BenchmarkColorFuncs-8           	   85471	     13734 ns/op
+BenchmarkColorFuncsParallel     	   13560	     89088 ns/op
+BenchmarkColorFuncsParallel     	   13573	     90546 ns/op
+BenchmarkColorFuncsParallel     	   13480	     95083 ns/op
+BenchmarkColorFuncsParallel     	   12847	     95475 ns/op
+BenchmarkColorFuncsParallel     	   12880	    106697 ns/op
+BenchmarkColorFuncsParallel-2   	   14954	     82305 ns/op
+BenchmarkColorFuncsParallel-2   	   13856	     85607 ns/op
+BenchmarkColorFuncsParallel-2   	   13803	     75743 ns/op
+BenchmarkColorFuncsParallel-2   	   14805	    131577 ns/op
+BenchmarkColorFuncsParallel-2   	   16498	     72787 ns/op
+BenchmarkColorFuncsParallel-4   	   24128	     51766 ns/op
+BenchmarkColorFuncsParallel-4   	   22033	     50229 ns/op
+BenchmarkColorFuncsParallel-4   	   23560	     52550 ns/op
+BenchmarkColorFuncsParallel-4   	   22778	     51410 ns/op
+BenchmarkColorFuncsParallel-4   	   27524	     54508 ns/op
+BenchmarkColorFuncsParallel-8   	   26864	     55603 ns/op
+BenchmarkColorFuncsParallel-8   	   25503	     55952 ns/op
+BenchmarkColorFuncsParallel-8   	   26001	     53402 ns/op
+BenchmarkColorFuncsParallel-8   	   20754	     52980 ns/op
+BenchmarkColorFuncsParallel-8   	   22998	     53251 ns/op
+PASS
+ok  	github.com/murphybytes/color	69.949s
