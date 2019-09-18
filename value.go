@@ -8,8 +8,8 @@ import (
 
 type ErrTypeColor string
 
-func (et ErrTypeColor) Error() string { return string(et) }
-func(et ErrTypeColor) String() string { return fmt.Sprintf("%q", string(et)) }
+func (et ErrTypeColor) Error() string  { return string(et) }
+func (et ErrTypeColor) String() string { return fmt.Sprintf("%q", string(et)) }
 
 const (
 	escape    = "\x1b"
@@ -17,13 +17,13 @@ const (
 	delimiter = ";"
 
 	ErrMissingRequiredAttribute = ErrTypeColor("must provide one or more attributes")
-	ErrMissingWriter = ErrTypeColor("nil writer not allowed")
+	ErrMissingWriter            = ErrTypeColor("nil writer not allowed")
 )
 
 type Attributes []Attribute
 
 func attributesToString(a []Attribute) string {
-	if len(a)  == 1 {
+	if len(a) == 1 {
 		return a[0].String()
 	}
 	var bld strings.Builder
@@ -177,7 +177,7 @@ type writerValuer interface {
 func colorPrint(out writerValuer, format string, attr Attribute, a ...interface{}) {
 	v := out.value(attr)
 	if !strings.HasSuffix(format, lineFeed) {
-		_, _ = fmt.Fprint(out, v.Sprintf(format, a...) + lineFeed )
+		_, _ = fmt.Fprint(out, v.Sprintf(format, a...)+lineFeed)
 		return
 	}
 	_, _ = v.Fprintf(out, format, a...)

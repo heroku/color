@@ -257,6 +257,7 @@ func TestStringHelperFuncs(t *testing.T) {
 		{FgHiMagenta, HiMagentaString},
 		{FgHiCyan, HiCyanString},
 		{FgHiWhite, HiWhiteString},
+		{FgWhite, WhiteString},
 	}
 
 	for _, tc := range tt {
