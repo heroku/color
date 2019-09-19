@@ -13,4 +13,11 @@ linters:
   disable:
     - golint
     - maligned
+    - gochecknoglobals
 
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - scopelint
+        - funlen

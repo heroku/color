@@ -142,24 +142,6 @@ func (v *Value) PrintlnFunc() func(a ...interface{}) {
 	}
 }
 
-func (v *Value) SprintFunc() func(a ...interface{}) string {
-	return func(a ...interface{}) string {
-		return v.Sprint(a...)
-	}
-}
-
-func (v *Value) SprintfFunc() func(format string, a ...interface{}) string {
-	return func(format string, a ...interface{}) string {
-		return v.Sprintf(format, a...)
-	}
-}
-
-func (v *Value) SprintlnFunc() func(a ...interface{}) string {
-	return func(a ...interface{}) string {
-		return v.Sprintln(a...)
-	}
-}
-
 func (v *Value) wrap(s string) string {
 	var b strings.Builder
 	b.Grow(len(v.colorStart) + len(s) + len(v.colorEnd))

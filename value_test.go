@@ -122,49 +122,6 @@ func TestColor(t *testing.T) {
 	}
 }
 
-func TestStringFuncs(t *testing.T) {
-	t.Parallel()
-	tt := []struct {
-		name string
-		test func(v *Value) string
-		want string
-	}{
-		{
-			name: "SprintFunc",
-			test: func(v *Value) string {
-				return v.SprintFunc()("white sprint")
-			},
-			want: "\x1b[37mwhite sprint\x1b[0m",
-		},
-		{
-			name: "SprintfFunc",
-			test: func(v *Value) string {
-				return v.SprintfFunc()("%q", "white sprintf")
-			},
-			want: "\x1b[37m\"white sprintf\"\x1b[0m",
-		},
-		{
-			name: "SprintlnFunc",
-			test: func(v *Value) string {
-				return v.SprintlnFunc()("white sprintln")
-			},
-			want: "\x1b[37mwhite sprintln\x1b[0m\n",
-		},
-	}
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			v, _ := New(&bytes.Buffer{}, FgWhite)
-			got := tc.test(v)
-			t.Log(got)
-			if got != tc.want {
-				t.Logf("want %q", tc.want)
-				t.Logf("got  %q", got)
-				t.Fatal()
-			}
-		})
-	}
-}
-
 func TestIoFuncs(t *testing.T) {
 	t.Parallel()
 	tt := []struct {
