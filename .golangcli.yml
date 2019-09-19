@@ -1,0 +1,16 @@
+run:
+  concurrency: 4
+
+linter-settings:
+  goimports:
+    local-prefixes: github.com/heroku/builder
+  lll:
+    line-length: 110
+
+
+linters:
+  enable-all: true
+  disable:
+    - golint
+    - maligned
+

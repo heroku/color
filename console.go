@@ -77,8 +77,8 @@ type valueCache struct {
 
 func newValueCache(w io.Writer) *valueCache {
 	return &valueCache{
-		cache:   make(valueMap),
-		parent:  w,
+		cache:  make(valueMap),
+		parent: w,
 	}
 }
 
