@@ -37,8 +37,6 @@ type Console struct {
 	*valueCache
 	out       *os.File
 	colorable io.Writer
-	colorStart string
-	colorEnd string
 }
 
 // NewConsole creates a wrapper around out which will output platform independent colored text.
@@ -46,17 +44,11 @@ func NewConsole(out *os.File) *Console {
 	c := &Console{
 		colorable: colorable.NewColorable(out),
 		out:       out,
-
 	}
 	c.init()
 	return c
 }
-func(c *Console) Set(attrs...Attribute) {
-	c.Lock()
-	defer c.Unlock()
 
-
-}
 // DisableColors pass a flag that will remove color information from console output if true,
 // otherwise color information is included by default.
 func (c *Console) DisableColors(strip bool) {
@@ -88,10 +80,10 @@ type valueMap map[Attribute]*Color
 type valueCache struct {
 	sync.RWMutex
 	cache  valueMap
-	parent io.Writer
+	parent writerValuer
 }
 
-func newValueCache(w io.Writer) *valueCache {
+func newValueCache(w writerValuer) *valueCache {
 	return &valueCache{
 		cache:  make(valueMap),
 		parent: w,

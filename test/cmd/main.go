@@ -18,4 +18,5 @@ func main() {
 	fmt.Fprintln(color.Stdout(), "Wow! This is", emphasized("exciting!"))
 
 	color.New().Println("no color at all")
+
 }

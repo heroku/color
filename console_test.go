@@ -8,7 +8,7 @@ import (
 func TestValueCache(t *testing.T) {
 	v := valueCache{
 		cache:  make(valueMap),
-		parent: &bytes.Buffer{},
+		parent: newMockConsole(),
 	}
 
 	vNew := v.value(FgWhite)

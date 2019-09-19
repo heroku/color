@@ -7,41 +7,50 @@ import (
 )
 
 const (
-	escape    = "\x1b["
-	lineFeed  = "\n"
-	delimiter = ";"
+	escape     = "\x1b["
+	endCode    = "m"
+	lineFeed   = "\n"
+	delimiter  = ";"
 	colorReset = "\x1b[0m"
 )
 
+type writerValuer interface {
+	io.Writer
+	value(Attribute) *Color
+}
+
 func chainSGRCodes(a []Attribute) string {
 	if len(a) == 0 {
-		return Reset.Code()
+		return colorReset
 	}
 	if len(a) == 1 {
-		return a[0].Code()
+		return escape + a[0].Code() + endCode
 	}
 	var bld strings.Builder
-	bld.Grow(len(a) * 4)
+	bld.Grow((len(a) * 2) + len(escape) + len(endCode))
+	bld.WriteString(escape)
+	delimsAdded := 0
 	for i := 0; i < len(a); i++ {
-		if bld.Len() > 0 {
+		if delimsAdded > 0 {
 			_, _ = bld.WriteString(delimiter)
 		}
 		bld.WriteString(a[i].Code())
+		delimsAdded++
 	}
+	bld.WriteString(endCode)
 	return bld.String()
 }
 
 // Color contains methods to create colored strings of text.
 type Color struct {
-	out        io.Writer
+	out        writerValuer
 	colorStart string
-
 }
 
-// NewWithWriter
-func NewWithWriter(wtr io.Writer, attrs ...Attribute) *Color {
+// NewWithWriter create a Color, supplying a writer, as well as desired attributes.
+func NewWithWriter(wtr writerValuer, attrs ...Attribute) *Color {
 	return &Color{
-		colorStart: fmt.Sprintf("%s%sm", escape, chainSGRCodes(attrs)),
+		colorStart: chainSGRCodes(attrs),
 		out:        wtr,
 	}
 }
@@ -58,7 +67,7 @@ func NewStderr(attrs ...Attribute) *Color {
 }
 
 // Fprint writes decorated text to standard out. The number of bytes written is returned.
-func (v Color) Fprint(out io.Writer, a ...interface{}) (int, error) {
+func (v Color) Fprint(out writerValuer, a ...interface{}) (int, error) {
 	_, _ = fmt.Fprint(out, v.colorStart)
 	n, err := fmt.Fprint(out, a...)
 	_, _ = fmt.Fprint(out, colorReset)
@@ -67,7 +76,7 @@ func (v Color) Fprint(out io.Writer, a ...interface{}) (int, error) {
 
 // Fprintf formats according to a format specifier and writes decorated text to standard out. The number of bytes
 // written is returned.
-func (v Color) Fprintf(out io.Writer, format string, a ...interface{}) (int, error) {
+func (v Color) Fprintf(out writerValuer, format string, a ...interface{}) (int, error) {
 	_, _ = fmt.Fprint(out, v.colorStart)
 	n, err := fmt.Fprintf(out, format, a...)
 	_, _ = fmt.Fprint(out, colorReset)
@@ -76,7 +85,7 @@ func (v Color) Fprintf(out io.Writer, format string, a ...interface{}) (int, err
 
 // Fprintln writes decorated text to standard out with a line feed. The number of bytes
 // written is returned.
-func (v Color) Fprintln(out io.Writer, a ...interface{}) (int, error) {
+func (v Color) Fprintln(out writerValuer, a ...interface{}) (int, error) {
 	_, _ = fmt.Fprint(out, v.colorStart)
 	n, err := fmt.Fprint(out, a...)
 	_, _ = fmt.Fprintln(out, colorReset)
@@ -122,22 +131,22 @@ func (v Color) Sprintln(a ...interface{}) string {
 }
 
 // FprintFunc returns a function that wraps Fprint.
-func (v Color) FprintFunc() func(out io.Writer, a ...interface{}) {
-	return func(out io.Writer, a ...interface{}) {
+func (v Color) FprintFunc() func(out writerValuer, a ...interface{}) {
+	return func(out writerValuer, a ...interface{}) {
 		_, _ = v.Fprint(out, a...)
 	}
 }
 
 // FprintfFunc returns a function that wraps Fprintf.
-func (v Color) FprintfFunc() func(out io.Writer, format string, a ...interface{}) {
-	return func(out io.Writer, format string, a ...interface{}) {
+func (v Color) FprintfFunc() func(out writerValuer, format string, a ...interface{}) {
+	return func(out writerValuer, format string, a ...interface{}) {
 		_, _ = v.Fprintf(out, format, a...)
 	}
 }
 
 // FprintlnFunc returns a function that wraps Fprintln.
-func (v Color) FprintlnFunc() func(out io.Writer, a ...interface{}) {
-	return func(out io.Writer, a ...interface{}) {
+func (v Color) FprintlnFunc() func(out writerValuer, a ...interface{}) {
+	return func(out writerValuer, a ...interface{}) {
 		_, _ = v.Fprintln(out, a...)
 	}
 }
@@ -191,11 +200,6 @@ func (v Color) wrap(s string) string {
 	b.WriteString(s)
 	b.WriteString(colorReset)
 	return b.String()
-}
-
-type writerValuer interface {
-	io.Writer
-	value(Attribute) *Color
 }
 
 func colorPrint(out writerValuer, format string, attr Attribute, a ...interface{}) {

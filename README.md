@@ -1,18 +1,21 @@
 # Color [![GoDoc](https://godoc.org/github.com/murphybytes/color?status.svg)](https://godoc.org/github.com/murphybytes/color)
 
-Color is based on the fabulous [github.com/fatih/color](https://github.com/fatih/color) package. Unfortunately the original
-color package is archived and is no longer supported. This was the inspiration for this package. Like the original 
-[Color package](https://github.com/fatih/color) , this
- package lets you use colorized outputs in terms of [ANSI Escape
-Codes](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors) in Go (Golang). Posix and Windows platforms are supported.  
+Color is based on the [github.com/fatih/color](https://github.com/fatih/color) package. Unfortunately the original
+color package is archived and is no longer supported. Like the original, this package lets you use colorized outputs in 
+terms of [ANSI Escape Codes](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors) in Golang but offers a number of 
+improvements from the original. Posix and Windows platforms are supported.  
 
 Color seeks to remain *mostly* backward compatible with fatih/color but has a number of changes to support concurrency,
-improved performance and more idiomatic Go. 
+improved performance and a more idiomatic style. 
 
-## Changes
+## Changes And Improvements 
 
 The methods of the new `Color` struct do not mutate the sender. This
 supports better concurrency support and improved performance. Towards this end `Color.Add` was removed. 
+
+You don't need to remember to wrap arguments that implement `io.Writer` in `colorable.NewColorable`.  Functions that took
+`io.Writer` in the past now expect a `*Console` argument which consistently provides the colorable functionality. Color
+can be disabled by calling `Console.DisableColors` (see below).
 
 Package public global variables are removed.  `color.NoColor` was removed. Colored output can be disabled using 
 the `Console.DisableColors` method instead. `color.Output` and `color.Error` were removed, use `Stdout()` and `Stderr()` 
@@ -22,10 +25,10 @@ Instances of `Console` can be passed to third party packages that take `io.Write
 information will be interpreted correctly on Windows. In addition, color information can be stripped by calling
 `Console.DisableColors(true)`.
 
-Performance is improved by approximately 30%. 
+Performance is improved significantly, as much as 400%.  
 
 `fatih/color` has race conditions.  This package was developed with `test.Parallel` and `-race` enabled for tests. Thus 
-far no race conditions are known. 
+far no race conditions are known and so this package is suitable for use in a multi goroutine environment. 
 
 ## Examples
 
@@ -51,8 +54,8 @@ c.Println("Prints cyan text with an underline.")
 
 ```go
 // Use your own io.Writer output
-var wtr bytes.Buffer
-color.NewWithWriter(&wtr, color.FgBlue)
+wtr := NewConsole(os.Stderr)
+color.NewWithWriter(wtr, color.FgBlue)
 color.Println("Hello! I'm blue.")
 ```
 
@@ -83,25 +86,6 @@ fmt.Printf("This %s rocks!\n", info("package"))
 fmt.Println("This", color.RedString("warning"), "should be not neglected.")
 fmt.Printf("%v %v\n", color.GreenString("Info:"), "an important message.")
 ```
-
-### Plug into existing code
-
-```go
-// Use handy standard colors
-color.Set(color.FgYellow)
-
-fmt.Println("Existing text will now be in yellow")
-fmt.Printf("This one %s\n", "too")
-
-color.Unset() // Don't forget to unset
-
-// You can mix up parameters
-color.Set(color.FgMagenta, color.Bold)
-defer color.Unset() // Use it in your function
-
-fmt.Println("All text will now be bold magenta.")
-```
-
 ### Disable/Enable color
  
 There might be a case where you want to explicitly disable/enable color output. 

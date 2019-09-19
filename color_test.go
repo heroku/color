@@ -11,6 +11,21 @@ import (
 type helperFunc func(fmt string, a ...interface{})
 type helperFuncString func(fmt string, a ...interface{}) string
 
+type mockConsole struct {
+	bytes.Buffer
+	*valueCache
+}
+
+func newMockConsole() *mockConsole {
+	var mc mockConsole
+	vc := &valueCache{
+		cache:  make(valueMap),
+		parent: &mc,
+	}
+	mc.valueCache = vc
+	return &mc
+}
+
 func assertEqualS(t *testing.T, want, got string) {
 	t.Helper()
 	if got != want {
@@ -47,8 +62,8 @@ func TestColor(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.text, func(t *testing.T) {
 			t.Run(tc.text+" print", func(t *testing.T) {
-				var buff bytes.Buffer
-				f := NewWithWriter(&buff, tc.code).PrintFunc()
+				buff := newMockConsole()
+				f := NewWithWriter(buff, tc.code).PrintFunc()
 				f(tc.text)
 				got := buff.String()
 				t.Log(got)
@@ -61,8 +76,8 @@ func TestColor(t *testing.T) {
 			})
 
 			t.Run(tc.text+" printf", func(t *testing.T) {
-				var buff bytes.Buffer
-				f := NewWithWriter(&buff, tc.code).PrintfFunc()
+				buff := newMockConsole()
+				f := NewWithWriter(buff, tc.code).PrintfFunc()
 				f("%q", tc.text)
 				got := buff.String()
 				t.Log(got)
@@ -75,8 +90,8 @@ func TestColor(t *testing.T) {
 			})
 
 			t.Run(tc.text+" println", func(t *testing.T) {
-				var buff bytes.Buffer
-				NewWithWriter(&buff, tc.code).PrintlnFunc()(tc.text)
+				buff := newMockConsole()
+				NewWithWriter(buff, tc.code).PrintlnFunc()(tc.text)
 				got := buff.String()
 				t.Log(got)
 				want := fmt.Sprintf("%s%dm%s%s0m\n", escape, tc.code, tc.text, escape)
@@ -95,26 +110,26 @@ func TestIoFuncs(t *testing.T) {
 	t.Parallel()
 	tt := []struct {
 		name string
-		test func(out io.Writer, v *Color)
+		test func(out writerValuer, v *Color)
 		want string
 	}{
 		{
 			name: "FprintFunc",
-			test: func(out io.Writer, v *Color) {
+			test: func(out writerValuer, v *Color) {
 				v.FprintFunc()(out, "white sprint")
 			},
 			want: "\x1b[37mwhite sprint\x1b[0m",
 		},
 		{
 			name: "FprintfFunc",
-			test: func(out io.Writer, v *Color) {
+			test: func(out writerValuer, v *Color) {
 				v.FprintfFunc()(out, "%q", "white sprintf")
 			},
 			want: "\x1b[37m\"white sprintf\"\x1b[0m",
 		},
 		{
 			name: "FprintlnFunc",
-			test: func(out io.Writer, v *Color) {
+			test: func(out writerValuer, v *Color) {
 				v.FprintlnFunc()(out, "white sprintln")
 			},
 			want: "\x1b[37mwhite sprintln\x1b[0m\n",
@@ -122,9 +137,9 @@ func TestIoFuncs(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			var out bytes.Buffer
-			v := NewWithWriter(&bytes.Buffer{}, FgWhite)
-			tc.test(&out, v)
+			out := newMockConsole()
+			v := NewWithWriter(newMockConsole(), FgWhite)
+			tc.test(out, v)
 			got := out.String()
 			t.Log(got)
 			if got != tc.want {
@@ -138,8 +153,8 @@ func TestIoFuncs(t *testing.T) {
 
 func TestMultiAttribute(t *testing.T) {
 	t.Parallel()
-	var out bytes.Buffer
-	v := NewWithWriter(&out, FgWhite, Bold, Underline)
+	out := newMockConsole()
+	v := NewWithWriter(out, FgWhite, Bold, Underline)
 	_, _ = v.Print("bold white")
 	want := "\x1b[37;1;4mbold white\x1b[0m"
 	got := out.String()
@@ -151,8 +166,8 @@ func TestMultiAttribute(t *testing.T) {
 
 func TestMissingAttribute(t *testing.T) {
 	t.Parallel()
-	var out bytes.Buffer
-	v := NewWithWriter(&out)
+	out := newMockConsole()
+	v := NewWithWriter(out)
 	_, _ = v.Print("no color")
 	want := "\x1b[0mno color\x1b[0m"
 	got := out.String()
@@ -285,6 +300,46 @@ func BenchmarkColorFuncsParallel(b *testing.B) {
 			Red("hello from %q.  i'm %d", "red", 23)
 		}
 	})
+}
+
+type mockWriter struct {
+	*valueCache
+	w io.Writer
+}
+
+func newMockWriter(w io.Writer) *mockWriter {
+	var mc mockWriter
+	vc := &valueCache{
+		cache:  make(valueMap),
+		parent: &mc,
+	}
+	mc.valueCache = vc
+	mc.w = w
+	return &mc
+}
+
+func (w *mockWriter) Write(b []byte) (int, error) {
+	return w.Write(b)
+}
+
+func BenchmarkColorStruct(b *testing.B) {
+	attrs := []Attribute{
+		FgBlack,
+		FgRed,
+		FgGreen,
+		FgYellow,
+		FgBlue,
+		FgMagenta,
+		FgCyan,
+		FgWhite,
+	}
+
+	for i := 0; i < b.N; i++ {
+		w := NewWithWriter(newMockWriter(ioutil.Discard), attrs...)
+		for i := 0; i < 100; i++ {
+			w.Println("jjjjjjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjjf")
+		}
+	}
 }
 
 func ExampleRed() {
