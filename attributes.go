@@ -5,14 +5,16 @@ import (
 	"strconv"
 )
 
-// Attribute defines a single SGR Code
+// Attribute defines a single SGR Code.
 type Attribute int
 
-func (a Attribute) String() string {
+// Code converts numeric Attribute to a string that can be used to set display attributes.
+func (a Attribute) Code() string {
 	return strconv.Itoa(int(a))
 }
 
-func (a Attribute) Name() string {
+// String supports Stringer interface for Attribute.
+func (a Attribute) String() string {
 	m := map[Attribute]string{
 		Reset:        "Reset",
 		Bold:         "Bold",
@@ -60,7 +62,7 @@ func (a Attribute) Name() string {
 	if s, ok := m[a]; ok {
 		return s
 	}
-	return fmt.Sprintf("unknown color %q", a)
+	return fmt.Sprintf("unknown color %d", a)
 }
 
 // Base attributes

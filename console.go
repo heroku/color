@@ -1,3 +1,4 @@
+// Package color produces colored output in terms of ANSI Escape Codes. Posix and Windows platforms are supported.
 package color
 
 import (
@@ -8,42 +9,57 @@ import (
 	"github.com/mattn/go-colorable"
 )
 
+var stdout *Console // Don't use directly use Stdout() instead.
+var stdoutOnce sync.Once
+
+// Stdout returns an io.Writer that writes colored text to standard out.
+func Stdout() *Console {
+	stdoutOnce.Do(func() {
+		stdout = NewConsole(os.Stdout)
+	})
+	return stdout
+}
+
+var stderr *Console // Don't use directly use Stderr() instead.
+var stderrOnce sync.Once
+
+// Stderr returns an io.Writer that writes colored text to standard error.
+func Stderr() *Console {
+	stderrOnce.Do(func() {
+		stderr = NewConsole(os.Stderr)
+	})
+	return stderr
+}
+
+// Console manages state for output, typically stdout or stderr.
 type Console struct {
 	sync.Mutex
 	*valueCache
 	out       *os.File
 	colorable io.Writer
+	colorStart string
+	colorEnd string
 }
 
-var stdout *Console
-var stdoutOnce sync.Once
+// NewConsole creates a wrapper around out which will output platform independent colored text.
+func NewConsole(out *os.File) *Console {
+	c := &Console{
+		colorable: colorable.NewColorable(out),
+		out:       out,
 
-func Stdout() *Console {
-	stdoutOnce.Do(func() {
-		stdout = &Console{
-			colorable: colorable.NewColorable(os.Stdout),
-			out:       os.Stdout,
-		}
-		stdout.init()
-	})
-	return stdout
+	}
+	c.init()
+	return c
 }
+func(c *Console) Set(attrs...Attribute) {
+	c.Lock()
+	defer c.Unlock()
 
-var stderr *Console
-var stderrOnce sync.Once
 
-func Stderr() *Console {
-	stderrOnce.Do(func() {
-		stderr = &Console{
-			colorable: colorable.NewColorable(os.Stderr),
-			out:       os.Stderr,
-		}
-		stderr.init()
-	})
-	return stderr
 }
-
-func (c *Console) StripColors(strip bool) {
+// DisableColors pass a flag that will remove color information from console output if true,
+// otherwise color information is included by default.
+func (c *Console) DisableColors(strip bool) {
 	c.Lock()
 	defer c.Unlock()
 	if strip {
@@ -67,7 +83,7 @@ func (c *Console) init() {
 	}
 }
 
-type valueMap map[Attribute]*Value
+type valueMap map[Attribute]*Color
 
 type valueCache struct {
 	sync.RWMutex
@@ -82,18 +98,18 @@ func newValueCache(w io.Writer) *valueCache {
 	}
 }
 
-func (vc *valueCache) value(attr Attribute) *Value {
+func (vc *valueCache) value(attr Attribute) *Color {
 	if v := vc.getIfExists(attr); v != nil {
 		return v
 	}
 	vc.Lock()
 	defer vc.Unlock()
-	v, _ := New(vc.parent, attr)
+	v := NewWithWriter(vc.parent, attr)
 	vc.cache[attr] = v
 	return v
 }
 
-func (vc *valueCache) getIfExists(attr Attribute) *Value {
+func (vc *valueCache) getIfExists(attr Attribute) *Color {
 	vc.RLock()
 	defer vc.RUnlock()
 	if v, ok := vc.cache[attr]; ok {
