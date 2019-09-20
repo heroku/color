@@ -61,6 +61,20 @@ func (c *Console) DisableColors(strip bool) {
 	c.colorable = colorable.NewColorable(c.out)
 }
 
+// Set will cause the color passed in as an argument to be written until Unset is called.
+func(c *Console) Set(color *Color) {
+	c.Lock()
+	defer c.Unlock()
+	_, _ = c.colorable.Write([]byte(color.colorStart))
+}
+
+// Unset will restore console output to default. It will undo colored console output from a call to Set.
+func(c *Console) Unset() {
+	c.Lock()
+	defer c.Unlock()
+	_, _ = c.colorable.Write([]byte(colorReset))
+}
+
 // Write so we can treat a console as a Writer
 func (c *Console) Write(b []byte) (int, error) {
 	c.Lock()

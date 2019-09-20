@@ -38,3 +38,25 @@ func TestConsoleWrite(t *testing.T) {
 		t.Fatalf("got %q expected %q", out.String(), "foo")
 	}
 }
+
+func TestSet(t *testing.T) {
+	var cons Console
+	var buff bytes.Buffer
+	cons.colorable = &buff
+
+	col := New(FgRed)
+	cons.Set(col)
+	if buff.String() != col.colorStart {
+		t.Fatalf("want %q got %q", col.colorStart, buff.String())
+	}
+}
+
+func TestUnset(t *testing.T) {
+	var cons Console
+	var buff bytes.Buffer
+	cons.colorable = &buff
+	cons.Unset()
+	if buff.String() != colorReset {
+		t.Fatalf("got %q want %q", buff.String(), colorReset)
+	}
+}
