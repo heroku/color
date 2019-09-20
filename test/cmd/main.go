@@ -18,5 +18,12 @@ func main() {
 	fmt.Fprintln(color.Stdout(), "Wow! This is", emphasized("exciting!"))
 
 	color.New().Println("no color at all")
+	c := color.New(color.FgHiMagenta)
+	color.Stdout().Set(c)
+	fmt.Println("magenta?")
+	fmt.Fprintln(color.Stdout(), "defin magenta")
+	color.Stdout().Unset()
+	fmt.Fprintln(color.Stdout(),"should be normal")
+
 
 }
