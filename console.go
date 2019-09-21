@@ -34,17 +34,19 @@ func Stderr() *Console {
 // Console manages state for output, typically stdout or stderr.
 type Console struct {
 	sync.Mutex
-	*valueCache
-	out       *os.File
-	colorable io.Writer
+	*colorCache
+	colored    io.Writer
+	noncolored io.Writer
+	current    io.Writer
 }
 
 // NewConsole creates a wrapper around out which will output platform independent colored text.
 func NewConsole(out *os.File) *Console {
 	c := &Console{
-		colorable: colorable.NewColorable(out),
-		out:       out,
+		colored:    colorable.NewColorable(out),
+		noncolored: colorable.NewNonColorable(out),
 	}
+	c.current = c.colored
 	c.init()
 	return c
 }
@@ -55,56 +57,57 @@ func (c *Console) DisableColors(strip bool) {
 	c.Lock()
 	defer c.Unlock()
 	if strip {
-		c.colorable = colorable.NewNonColorable(c.out)
+		c.current = c.noncolored
 		return
 	}
-	c.colorable = colorable.NewColorable(c.out)
+	c.current = c.colored
 }
 
 // Set will cause the color passed in as an argument to be written until Unset is called.
-func(c *Console) Set(color *Color) {
+func (c *Console) Set(color *Color) {
 	c.Lock()
 	defer c.Unlock()
-	_, _ = c.colorable.Write([]byte(color.colorStart))
+	_, _ = c.current.Write([]byte(color.colorStart))
 }
 
 // Unset will restore console output to default. It will undo colored console output from a call to Set.
-func(c *Console) Unset() {
+func (c *Console) Unset() {
 	c.Lock()
 	defer c.Unlock()
-	_, _ = c.colorable.Write([]byte(colorReset))
+	_, _ = c.current.Write([]byte(colorReset))
 }
 
 // Write so we can treat a console as a Writer
 func (c *Console) Write(b []byte) (int, error) {
 	c.Lock()
-	defer c.Unlock()
-	return c.colorable.Write(b)
+	n, err := c.current.Write(b)
+	c.Unlock()
+	return n, err
 }
 
 func (c *Console) init() {
-	c.valueCache = &valueCache{
-		cache:  make(valueMap),
+	c.colorCache = &colorCache{
+		cache:  make(colorMap),
 		parent: c,
 	}
 }
 
-type valueMap map[Attribute]*Color
+type colorMap map[Attribute]*Color
 
-type valueCache struct {
+type colorCache struct {
 	sync.RWMutex
-	cache  valueMap
+	cache  colorMap
 	parent writerValuer
 }
 
-func newValueCache(w writerValuer) *valueCache {
-	return &valueCache{
-		cache:  make(valueMap),
+func newValueCache(w writerValuer) *colorCache {
+	return &colorCache{
+		cache:  make(colorMap),
 		parent: w,
 	}
 }
 
-func (vc *valueCache) value(attr Attribute) *Color {
+func (vc *colorCache) value(attr Attribute) *Color {
 	if v := vc.getIfExists(attr); v != nil {
 		return v
 	}
@@ -115,7 +118,7 @@ func (vc *valueCache) value(attr Attribute) *Color {
 	return v
 }
 
-func (vc *valueCache) getIfExists(attr Attribute) *Color {
+func (vc *colorCache) getIfExists(attr Attribute) *Color {
 	vc.RLock()
 	defer vc.RUnlock()
 	if v, ok := vc.cache[attr]; ok {

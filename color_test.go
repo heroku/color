@@ -13,16 +13,16 @@ type helperFuncString func(fmt string, a ...interface{}) string
 
 type mockConsole struct {
 	bytes.Buffer
-	*valueCache
+	*colorCache
 }
 
 func newMockConsole() *mockConsole {
 	var mc mockConsole
-	vc := &valueCache{
-		cache:  make(valueMap),
+	vc := &colorCache{
+		cache:  make(colorMap),
 		parent: &mc,
 	}
-	mc.valueCache = vc
+	mc.colorCache = vc
 	return &mc
 }
 
@@ -241,10 +241,10 @@ func TestHelperStdoutFuncs(t *testing.T) {
 		t.Run(tc.code.String()+"_stdout", func(t *testing.T) {
 			var buff bytes.Buffer
 			cons := Stdout()
-			oldWriter := cons.colorable
-			cons.colorable = &buff
+			oldWriter := cons.current
+			cons.current = &buff
 			defer func() {
-				cons.colorable = oldWriter
+				cons.current = oldWriter
 			}()
 
 			tc.testStdout("color - %q", tc.code)
@@ -255,10 +255,10 @@ func TestHelperStdoutFuncs(t *testing.T) {
 		t.Run(tc.code.String()+"_stderr", func(t *testing.T) {
 			var buff bytes.Buffer
 			cons := Stderr()
-			oldWriter := cons.colorable
-			cons.colorable = &buff
+			oldWriter := cons.current
+			cons.current = &buff
 			defer func() {
-				cons.colorable = oldWriter
+				cons.current = oldWriter
 			}()
 
 			tc.testStdErr("color - %q", tc.code)
@@ -269,10 +269,10 @@ func TestHelperStdoutFuncs(t *testing.T) {
 
 func BenchmarkColorFuncs(b *testing.B) {
 	cons := Stdout()
-	oldWriter := cons.colorable
-	cons.colorable = ioutil.Discard
+	oldWriter := cons.colored
+	cons.colored = ioutil.Discard
 	defer func() {
-		cons.colorable = oldWriter
+		cons.colored = oldWriter
 	}()
 
 	for i := 0; i < b.N; i++ {
@@ -284,10 +284,10 @@ func BenchmarkColorFuncs(b *testing.B) {
 
 func BenchmarkColorFuncsParallel(b *testing.B) {
 	cons := Stdout()
-	oldWriter := cons.colorable
-	cons.colorable = ioutil.Discard
+	oldWriter := cons.colored
+	cons.colored = ioutil.Discard
 	defer func() {
-		cons.colorable = oldWriter
+		cons.colored = oldWriter
 	}()
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -303,17 +303,17 @@ func BenchmarkColorFuncsParallel(b *testing.B) {
 }
 
 type mockWriter struct {
-	*valueCache
+	*colorCache
 	w io.Writer
 }
 
 func newMockWriter(w io.Writer) *mockWriter {
 	var mc mockWriter
-	vc := &valueCache{
-		cache:  make(valueMap),
+	vc := &colorCache{
+		cache:  make(colorMap),
 		parent: &mc,
 	}
-	mc.valueCache = vc
+	mc.colorCache = vc
 	mc.w = w
 	return &mc
 }

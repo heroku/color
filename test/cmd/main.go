@@ -23,7 +23,6 @@ func main() {
 	fmt.Println("magenta?")
 	fmt.Fprintln(color.Stdout(), "defin magenta")
 	color.Stdout().Unset()
-	fmt.Fprintln(color.Stdout(),"should be normal")
-
+	fmt.Fprintln(color.Stdout(), "should be normal")
 
 }

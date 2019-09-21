@@ -211,10 +211,10 @@ func colorPrint(out writerValuer, format string, attr Attribute, a ...interface{
 	_, _ = v.Fprintf(out, format, a...)
 }
 
-var colorCache *valueCache = newValueCache(Stdout())
+var cache *colorCache = newValueCache(Stdout())
 
 func colorString(format string, attr Attribute, a ...interface{}) string {
-	return colorCache.value(attr).Sprintf(format, a...)
+	return cache.value(attr).Sprintf(format, a...)
 }
 
 // Black helper to produce black text to stdout.

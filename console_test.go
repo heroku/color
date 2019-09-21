@@ -6,8 +6,8 @@ import (
 )
 
 func TestValueCache(t *testing.T) {
-	v := valueCache{
-		cache:  make(valueMap),
+	v := colorCache{
+		cache:  make(colorMap),
 		parent: newMockConsole(),
 	}
 
@@ -25,7 +25,7 @@ func TestValueCache(t *testing.T) {
 func TestConsoleWrite(t *testing.T) {
 	var out bytes.Buffer
 	c := Console{
-		colorable: &out,
+		current: &out,
 	}
 	n, err := c.Write([]byte("foo"))
 	if err != nil {
@@ -42,7 +42,7 @@ func TestConsoleWrite(t *testing.T) {
 func TestSet(t *testing.T) {
 	var cons Console
 	var buff bytes.Buffer
-	cons.colorable = &buff
+	cons.current = &buff
 
 	col := New(FgRed)
 	cons.Set(col)
@@ -54,7 +54,7 @@ func TestSet(t *testing.T) {
 func TestUnset(t *testing.T) {
 	var cons Console
 	var buff bytes.Buffer
-	cons.colorable = &buff
+	cons.current = &buff
 	cons.Unset()
 	if buff.String() != colorReset {
 		t.Fatalf("got %q want %q", buff.String(), colorReset)
