@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -67,7 +68,7 @@ func TestColor(t *testing.T) {
 				f(tc.text)
 				got := buff.String()
 				t.Log(got)
-				want := fmt.Sprintf("%s%dm%s%s0m", escape, tc.code, tc.text, escape)
+				want := fmt.Sprintf("%s%sm%s%s0m", escape, tc.code, tc.text, escape)
 				if got != want {
 					t.Logf("got  %q", got)
 					t.Logf("want %q", want)
@@ -81,7 +82,7 @@ func TestColor(t *testing.T) {
 				f("%q", tc.text)
 				got := buff.String()
 				t.Log(got)
-				want := fmt.Sprintf("%s%dm%q%s0m", escape, tc.code, tc.text, escape)
+				want := fmt.Sprintf("%s%sm%q%s0m", escape, tc.code, tc.text, escape)
 				if got != want {
 					t.Logf("got  %q", got)
 					t.Logf("want %q", want)
@@ -94,7 +95,7 @@ func TestColor(t *testing.T) {
 				NewWithWriter(buff, tc.code).PrintlnFunc()(tc.text)
 				got := buff.String()
 				t.Log(got)
-				want := fmt.Sprintf("%s%dm%s%s0m\n", escape, tc.code, tc.text, escape)
+				want := fmt.Sprintf("%s%sm%s%s0m\n", escape, tc.code, tc.text, escape)
 				if got != want {
 					t.Logf("got  %q", got)
 					t.Logf("want %q", want)
@@ -203,8 +204,8 @@ func TestStringHelperFuncs(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.code.String(), func(t *testing.T) {
-			want := fmt.Sprintf("\x1b[%dmcolor - %q\x1b[0m", tc.code, tc.code)
-			got := tc.test("color - %q", tc.code)
+			want := fmt.Sprintf("\x1b[%smcolor - %q\x1b[0m", tc.code, tc.code.Name())
+			got := tc.test("color - %q", tc.code.Name())
 			assertEqualS(t, want, got)
 		})
 	}
@@ -236,7 +237,7 @@ func TestHelperStdoutFuncs(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		want := fmt.Sprintf("\x1b[%dmcolor - %q\x1b[0m\n", tc.code, tc.code)
+		want := fmt.Sprintf("\x1b[%smcolor - %q\x1b[0m\n", tc.code, tc.code.Name())
 
 		t.Run(tc.code.String()+"_stdout", func(t *testing.T) {
 			var buff bytes.Buffer
@@ -247,7 +248,7 @@ func TestHelperStdoutFuncs(t *testing.T) {
 				cons.current = oldWriter
 			}()
 
-			tc.testStdout("color - %q", tc.code)
+			tc.testStdout("color - %q", tc.code.Name())
 			t.Log(buff.String())
 			assertEqualS(t, want, buff.String())
 		})
@@ -261,7 +262,7 @@ func TestHelperStdoutFuncs(t *testing.T) {
 				cons.current = oldWriter
 			}()
 
-			tc.testStdErr("color - %q", tc.code)
+			tc.testStdErr("color - %q", tc.code.Name())
 			assertEqualS(t, want, buff.String())
 		})
 	}
@@ -269,10 +270,10 @@ func TestHelperStdoutFuncs(t *testing.T) {
 
 func BenchmarkColorFuncs(b *testing.B) {
 	cons := Stdout()
-	oldWriter := cons.colored
-	cons.colored = ioutil.Discard
+	oldWriter := cons.current
+	cons.current = ioutil.Discard
 	defer func() {
-		cons.colored = oldWriter
+		cons.current = oldWriter
 	}()
 
 	for i := 0; i < b.N; i++ {
@@ -284,10 +285,10 @@ func BenchmarkColorFuncs(b *testing.B) {
 
 func BenchmarkColorFuncsParallel(b *testing.B) {
 	cons := Stdout()
-	oldWriter := cons.colored
-	cons.colored = ioutil.Discard
+	oldWriter := cons.current
+	cons.current = ioutil.Discard
 	defer func() {
-		cons.colored = oldWriter
+		cons.current = oldWriter
 	}()
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -334,9 +335,12 @@ func BenchmarkColorStruct(b *testing.B) {
 		FgWhite,
 	}
 
+	cons := NewConsole(os.Stdout)
+	cons.current = ioutil.Discard
+
 	for i := 0; i < b.N; i++ {
-		w := NewWithWriter(newMockWriter(ioutil.Discard), attrs...)
 		for i := 0; i < 100; i++ {
+			w := NewWithWriter(cons, attrs...)
 			w.Println("jjjjjjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjjf")
 		}
 	}

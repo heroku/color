@@ -16,25 +16,26 @@ const (
 
 type writerValuer interface {
 	io.Writer
-	value(Attribute) *Color
+	value(attr ...Attribute) *Color
 }
 
 func chainSGRCodes(a []Attribute) string {
-	if len(a) == 0 {
+	codes := to_codes(a)
+	if len(codes) == 0 {
 		return colorReset
 	}
-	if len(a) == 1 {
-		return escape + a[0].Code() + endCode
+	if len(codes) == 1 {
+		return escape + codes[0] + endCode
 	}
 	var bld strings.Builder
-	bld.Grow((len(a) * 2) + len(escape) + len(endCode))
+	bld.Grow((len(codes) * 2) + len(escape) + len(endCode))
 	bld.WriteString(escape)
 	delimsAdded := 0
 	for i := 0; i < len(a); i++ {
 		if delimsAdded > 0 {
 			_, _ = bld.WriteString(delimiter)
 		}
-		bld.WriteString(a[i].Code())
+		bld.WriteString(codes[i])
 		delimsAdded++
 	}
 	bld.WriteString(endCode)
@@ -49,10 +50,7 @@ type Color struct {
 
 // NewWithWriter create a Color, supplying a writer, as well as desired attributes.
 func NewWithWriter(wtr writerValuer, attrs ...Attribute) *Color {
-	return &Color{
-		colorStart: chainSGRCodes(attrs),
-		out:        wtr,
-	}
+	return wtr.value(attrs...)
 }
 
 // New creates a Color that outputs to Stdout. It takes a list of Attributes to define

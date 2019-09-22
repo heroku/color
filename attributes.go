@@ -2,19 +2,18 @@ package color
 
 import (
 	"fmt"
-	"strconv"
 )
 
 // Attribute defines a single SGR Code.
-type Attribute int
+type Attribute uint64
 
 // Code converts numeric Attribute to a string that can be used to set display attributes.
-func (a Attribute) Code() string {
-	return strconv.Itoa(int(a))
+func (a Attribute) String() string {
+	return attributeToSGRCode[a]
 }
 
 // String supports Stringer interface for Attribute.
-func (a Attribute) String() string {
+func (a Attribute) Name() string {
 	m := map[Attribute]string{
 		Reset:        "Reset",
 		Bold:         "Bold",
@@ -65,9 +64,8 @@ func (a Attribute) String() string {
 	return fmt.Sprintf("unknown color %d", a)
 }
 
-// Base attributes
 const (
-	Reset Attribute = iota
+	Reset Attribute = 1 << iota
 	Bold
 	Faint
 	Italic
@@ -77,11 +75,7 @@ const (
 	ReverseVideo
 	Concealed
 	CrossedOut
-)
-
-// Foreground text colors
-const (
-	FgBlack Attribute = iota + 30
+	FgBlack
 	FgRed
 	FgGreen
 	FgYellow
@@ -89,11 +83,7 @@ const (
 	FgMagenta
 	FgCyan
 	FgWhite
-)
-
-// Foreground Hi-Intensity text colors
-const (
-	FgHiBlack Attribute = iota + 90
+	FgHiBlack
 	FgHiRed
 	FgHiGreen
 	FgHiYellow
@@ -101,11 +91,7 @@ const (
 	FgHiMagenta
 	FgHiCyan
 	FgHiWhite
-)
-
-// Background text colors
-const (
-	BgBlack Attribute = iota + 40
+	BgBlack
 	BgRed
 	BgGreen
 	BgYellow
@@ -113,11 +99,7 @@ const (
 	BgMagenta
 	BgCyan
 	BgWhite
-)
-
-// Background Hi-Intensity text colors
-const (
-	BgHiBlack Attribute = iota + 100
+	BgHiBlack
 	BgHiRed
 	BgHiGreen
 	BgHiYellow
@@ -126,3 +108,68 @@ const (
 	BgHiCyan
 	BgHiWhite
 )
+
+var attributeToSGRCode = map[Attribute]string{
+	Reset:        "0",
+	Bold:         "1",
+	Faint:        "2",
+	Italic:       "3",
+	Underline:    "4",
+	BlinkSlow:    "5",
+	BlinkRapid:   "6",
+	ReverseVideo: "7",
+	Concealed:    "8",
+	CrossedOut:   "9",
+	FgBlack:      "30",
+	FgRed:        "31",
+	FgGreen:      "32",
+	FgYellow:     "33",
+	FgBlue:       "34",
+	FgMagenta:    "35",
+	FgCyan:       "36",
+	FgWhite:      "37",
+	BgBlack:      "40",
+	BgRed:        "41",
+	BgGreen:      "42",
+	BgYellow:     "43",
+	BgBlue:       "44",
+	BgMagenta:    "45",
+	BgCyan:       "46",
+	BgWhite:      "47",
+	FgHiBlack:    "90",
+	FgHiRed:      "91",
+	FgHiGreen:    "92",
+	FgHiYellow:   "93",
+	FgHiBlue:     "94",
+	FgHiMagenta:  "95",
+	FgHiCyan:     "96",
+	FgHiWhite:    "97",
+	BgHiBlack:    "100",
+	BgHiRed:      "101",
+	BgHiGreen:    "102",
+	BgHiYellow:   "103",
+	BgHiBlue:     "104",
+	BgHiMagenta:  "105",
+	BgHiCyan:     "106",
+	BgHiWhite:    "107",
+}
+
+func to_codes(attrs []Attribute) []string {
+	codes := make([]string, len(attrs))
+	for i := 0; i < len(attrs); i++ {
+		code, ok := attributeToSGRCode[attrs[i]]
+		if !ok {
+			return nil
+		}
+		codes[i] = code
+	}
+	return codes
+}
+
+func to_key(attr []Attribute) Attribute {
+	var key Attribute
+	for i := 0; i < len(attr); i++ {
+		key |= attr[i]
+	}
+	return key
+}

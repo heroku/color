@@ -107,21 +107,26 @@ func newValueCache(w writerValuer) *colorCache {
 	}
 }
 
-func (vc *colorCache) value(attr Attribute) *Color {
-	if v := vc.getIfExists(attr); v != nil {
+func (cc *colorCache) value(attrs ...Attribute) *Color {
+	key := to_key(attrs)
+	if v := cc.getIfExists(key); v != nil {
 		return v
 	}
-	vc.Lock()
-	defer vc.Unlock()
-	v := NewWithWriter(vc.parent, attr)
-	vc.cache[attr] = v
+	cc.Lock()
+	defer cc.Unlock()
+	v := &Color{
+		colorStart: chainSGRCodes(attrs),
+		out:        cc.parent,
+	}
+	cc.cache[key] = v
 	return v
 }
 
-func (vc *colorCache) getIfExists(attr Attribute) *Color {
+func (vc *colorCache) getIfExists(key Attribute) *Color {
 	vc.RLock()
 	defer vc.RUnlock()
-	if v, ok := vc.cache[attr]; ok {
+
+	if v, ok := vc.cache[key]; ok {
 		return v
 	}
 	return nil
