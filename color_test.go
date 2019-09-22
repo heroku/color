@@ -351,12 +351,12 @@ func ExampleRed() {
 	Red("Hello red!")
 }
 
-func ExampleColorer_Println() {
+func ExampleColor_Println() {
 	// Output underlined white text to stdout.
 	New(FgWhite, Underline).Println("I'm underlined and white!")
 }
 
-func ExampleColorer_SprintFunc() {
+func ExampleColor_SprintFunc() {
 	// Create functions that add color information
 	emphasized := New(FgRed, Bold, Underline).SprintFunc()
 	fmt.Println("Wow, this is", emphasized("exciting!"))
