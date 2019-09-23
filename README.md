@@ -1,4 +1,4 @@
-# Color [![GoDoc](https://godoc.org/github.com/murphybytes/color?status.svg)](https://godoc.org/github.com/murphybytes/color)
+# Color [![GoDoc](https://godoc.org/github.com/heroku/color?status.svg)](https://godoc.org/github.com/heroku/color)
 
 Color is based on the [github.com/fatih/color](https://github.com/fatih/color) package. Unfortunately the original
 color package is archived and is no longer supported. Like the original, this package lets you use colorized outputs in 
@@ -104,6 +104,6 @@ color.Stdout().DisableColors(*flagNoColor)
 
 ## License
 
-The MIT License (MIT) - see [`LICENSE.md`](https://github.com/murphybytes/color/blob/master/LICENSE.md) for more details
+The MIT License (MIT) - see [`LICENSE.md`](https://github.com/heroku/color/blob/master/LICENSE.md) for more details
 
 
