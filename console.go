@@ -2,8 +2,10 @@
 package color
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/mattn/go-colorable"
@@ -34,7 +36,6 @@ func Stderr() *Console {
 // Console manages state for output, typically stdout or stderr.
 type Console struct {
 	sync.Mutex
-	*colorCache
 	colored    io.Writer
 	noncolored io.Writer
 	current    io.Writer
@@ -47,12 +48,10 @@ func NewConsole(out *os.File) *Console {
 		noncolored: colorable.NewNonColorable(out),
 	}
 	c.current = c.colored
-	c.init()
 	return c
 }
 
-// DisableColors pass a flag that will remove color information from console output if true,
-// otherwise color information is included by default.
+// DisableColors if strip is true ANSI color information will be removed. Otherwise it will be included.
 func (c *Console) DisableColors(strip bool) {
 	c.Lock()
 	defer c.Unlock()
@@ -70,7 +69,7 @@ func (c *Console) Set(color *Color) {
 	_, _ = c.current.Write([]byte(color.colorStart))
 }
 
-// Unset will restore console output to default. It will undo colored console output from a call to Set.
+// Unset will restore console output to default. It will undo colored console output defined from a call to Set.
 func (c *Console) Unset() {
 	c.Lock()
 	defer c.Unlock()
@@ -85,49 +84,54 @@ func (c *Console) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func (c *Console) init() {
-	c.colorCache = &colorCache{
-		cache:  make(colorMap),
-		parent: c,
+// Print writes colored text to the console. The number of bytes written
+// is returned.
+func (c *Console) Print(col *Color, args ...string) (int, error) {
+	return c.Write([]byte(col.wrap(args...)))
+}
+
+// Printf formats according to a format specifier and writes colored text to the console.
+func (c *Console) Printf(col *Color, format string, args ...interface{}) (int, error) {
+	return c.Write([]byte(col.wrap(fmt.Sprintf(format, args...))))
+}
+
+// Println writes colored text to console, appending input with a line feed.
+// The number of bytes written is returned.
+func (c *Console) Println(col *Color, args ...string) (int, error) {
+	s := col.wrap(args...)
+	if !strings.HasSuffix(s, lineFeed) {
+		s += lineFeed
+	}
+	return c.Write([]byte(s))
+
+}
+
+// PrintFunc returns a wrapper function for Print.
+func (c *Console) PrintFunc(col *Color) func(a ...string) {
+	return func(a ...string) {
+		_, _ = c.Print(col, a...)
 	}
 }
 
-type colorMap map[Attribute]*Color
-
-type colorCache struct {
-	sync.RWMutex
-	cache  colorMap
-	parent writerValuer
-}
-
-func newValueCache(w writerValuer) *colorCache {
-	return &colorCache{
-		cache:  make(colorMap),
-		parent: w,
+// PrintfFunc returns a wrapper function for Printf.
+func (c *Console) PrintfFunc(col *Color) func(format string, args ...interface{}) {
+	return func(format string, s ...interface{}) {
+		_, _ = c.Printf(col, format, s...)
 	}
 }
 
-func (cc *colorCache) value(attrs ...Attribute) *Color {
-	key := to_key(attrs)
-	if v := cc.getIfExists(key); v != nil {
-		return v
+// PrintlnFunc returns a wrapper function for Println.
+func (c *Console) PrintlnFunc(col *Color) func(a ...string) {
+	return func(a ...string) {
+		_, _ = c.Println(col, a...)
 	}
-	cc.Lock()
-	defer cc.Unlock()
-	v := &Color{
-		colorStart: chainSGRCodes(attrs),
-		out:        cc.parent,
-	}
-	cc.cache[key] = v
-	return v
 }
 
-func (vc *colorCache) getIfExists(key Attribute) *Color {
-	vc.RLock()
-	defer vc.RUnlock()
-
-	if v, ok := vc.cache[key]; ok {
-		return v
+func (c *Console) colorPrint(format string, attr Attribute, a ...interface{}) {
+	col := cache().value(attr)
+	if !strings.HasSuffix(format, lineFeed) {
+		_, _ = c.Println(col, fmt.Sprintf(format, a...))
+		return
 	}
-	return nil
+	_, _ = c.Printf(col, format, fmt.Sprint(a...))
 }

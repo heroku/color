@@ -11,21 +11,20 @@ improved performance and a more idiomatic style.
 ## Changes And Improvements 
 
 The methods of the new `Color` struct do not mutate the sender. This
-supports better concurrency support and improved performance. Towards this end `Color.Add` was removed. 
+results in better concurrency support and improved performance. 
 
-You don't need to remember to wrap arguments that implement `io.Writer` in `colorable.NewColorable`.  Functions that took
-`io.Writer` in the past now expect a `*Console` argument which consistently provides the colorable functionality. Color
-can be disabled by calling `Console.DisableColors` (see below).
+You don't need to remember to wrap io.Writer arguments in `colorable.NewColorable` in order to support Windows functionality.
 
 Package public global variables are removed.  `color.NoColor` was removed. Colored output can be disabled using 
 the `Console.DisableColors` method instead. `color.Output` and `color.Error` were removed, use `Stdout()` and `Stderr()` 
 instead.  
 
-Instances of `Console` can be passed to third party packages that take `io.Writer`  and log ANSI color information. The color
-information will be interpreted correctly on Windows. In addition, color information can be stripped by calling
-`Console.DisableColors(true)`.
+Instances of `Console` can be passed to methods in third party packages that take `io.Writer` as an argument. If the 
+ third party package emits ANSI color information the passed in writer will be interpreted correctly on Windows. In 
+ addition, color information can be stripped by calling `Console.DisableColors(true)`.
 
-Performance is improved significantly, as much as 400%.  
+Performance is improved significantly, as much as 400%.  Note that some functions that you'd expect to take an 
+array of interface{} take an array of strings instead because underlying calls to fmt.SprintXX functions are slow. 
 
 `fatih/color` has race conditions.  This package was developed with `test.Parallel` and `-race` enabled for tests. Thus 
 far no race conditions are known and so this package is suitable for use in a multi goroutine environment. 
@@ -46,29 +45,27 @@ color.Blue("Prints %s in blue.", "text")
 
 ```go
 // Create a new color object
-c := color.New(color.FgCyan, color.Underline)
-c.Println("Prints cyan text with an underline.")
+color.Stdout().Println(color.New(color.FgCyan, color.Underline), "Prints cyan text with an underline.")
 ```
 
 ### Use your own output (io.Writer)
 
 ```go
 // Use your own io.Writer output
-wtr := NewConsole(os.Stderr)
-color.NewWithWriter(wtr, color.FgBlue)
-color.Println("Hello! I'm blue.")
+wtr := color.NewConsole(os.Stderr)
+wtr.Println(color.New(color.FgBlue), "Hello! I'm blue.")
 ```
 
 ### Custom print functions (PrintFunc)
 
 ```go
 // Create a custom print function for convenience
-red := color.NewStderr(color.FgRed).PrintfFunc()
+red := color.StdErr().PrintfFunc(color.New(color.FgRed))
 red("Warning")
 red("Error: %s", err)
 
 // Mix up multiple attributes
-notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
+notice := color.Stdout().PrintlnFunc(color.New(color.Bold, color.FgGreen))
 notice("Don't forget this...")
 ```
 ### Insert into noncolor strings (SprintFunc)
@@ -91,7 +88,7 @@ fmt.Printf("%v %v\n", color.GreenString("Info:"), "an important message.")
 There might be a case where you want to explicitly disable/enable color output. 
 
 `Color` has support to disable/enable colors on a per `Console` basis.  
-definitions. For example suppose you have a CLI app and a `--no-color` bool flag. You 
+For example suppose you have a CLI app and a `--no-color` bool flag. You 
 can easily disable the color output with:
 
 ```go

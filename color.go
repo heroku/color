@@ -2,7 +2,6 @@ package color
 
 import (
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -13,11 +12,6 @@ const (
 	delimiter  = ";"
 	colorReset = "\x1b[0m"
 )
-
-type writerValuer interface {
-	io.Writer
-	value(attr ...Attribute) *Color
-}
 
 func chainSGRCodes(a []Attribute) string {
 	codes := to_codes(a)
@@ -44,68 +38,13 @@ func chainSGRCodes(a []Attribute) string {
 
 // Color contains methods to create colored strings of text.
 type Color struct {
-	out        writerValuer
 	colorStart string
 }
 
-// NewWithWriter create a Color, supplying a writer, as well as desired attributes.
-func NewWithWriter(wtr writerValuer, attrs ...Attribute) *Color {
-	return wtr.value(attrs...)
-}
-
-// New creates a Color that outputs to Stdout. It takes a list of Attributes to define
-// the appearance of output text produced by Color methods.
+// New creates a Color. It takes a list of Attributes to define
+// the appearance of output.
 func New(attrs ...Attribute) *Color {
-	return NewWithWriter(Stdout(), attrs...)
-}
-
-// NewStderr helper that constructs a Color with stderr as it's underlying io.Writer
-func NewStderr(attrs ...Attribute) *Color {
-	return NewWithWriter(Stderr(), attrs...)
-}
-
-// Fprint writes decorated text to standard out. The number of bytes written is returned.
-func (v Color) Fprint(out writerValuer, a ...interface{}) (int, error) {
-	_, _ = fmt.Fprint(out, v.colorStart)
-	n, err := fmt.Fprint(out, a...)
-	_, _ = fmt.Fprint(out, colorReset)
-	return n, err
-}
-
-// Fprintf formats according to a format specifier and writes decorated text to standard out. The number of bytes
-// written is returned.
-func (v Color) Fprintf(out writerValuer, format string, a ...interface{}) (int, error) {
-	_, _ = fmt.Fprint(out, v.colorStart)
-	n, err := fmt.Fprintf(out, format, a...)
-	_, _ = fmt.Fprint(out, colorReset)
-	return n, err
-}
-
-// Fprintln writes decorated text to standard out with a line feed. The number of bytes
-// written is returned.
-func (v Color) Fprintln(out writerValuer, a ...interface{}) (int, error) {
-	_, _ = fmt.Fprint(out, v.colorStart)
-	n, err := fmt.Fprint(out, a...)
-	_, _ = fmt.Fprintln(out, colorReset)
-	return n, err
-}
-
-// Print writes decorated text to the io.Writer passed to the Color constructor. The number of bytes written
-// is returned.
-func (v Color) Print(a ...interface{}) (int, error) {
-	return v.Fprint(v.out, a...)
-}
-
-// Printf formats according to a format specifier and writes decorated text to the io.Writer passed to the Color
-// constructor. The number of bytes written is returned.
-func (v Color) Printf(format string, a ...interface{}) (int, error) {
-	return v.Fprintf(v.out, format, a...)
-}
-
-// Println writes decorated text to the io.Writer passed to the Color constructor.
-// The number of bytes written is returned.
-func (v Color) Println(a ...interface{}) (int, error) {
-	return v.Fprintln(v.out, a...)
+	return cache().value(attrs...)
 }
 
 // Sprint returns text decorated with the display Attributes passed to Color constructor function.
@@ -126,48 +65,6 @@ func (v Color) Sprintln(a ...interface{}) string {
 		s += lineFeed
 	}
 	return s
-}
-
-// FprintFunc returns a function that wraps Fprint.
-func (v Color) FprintFunc() func(out writerValuer, a ...interface{}) {
-	return func(out writerValuer, a ...interface{}) {
-		_, _ = v.Fprint(out, a...)
-	}
-}
-
-// FprintfFunc returns a function that wraps Fprintf.
-func (v Color) FprintfFunc() func(out writerValuer, format string, a ...interface{}) {
-	return func(out writerValuer, format string, a ...interface{}) {
-		_, _ = v.Fprintf(out, format, a...)
-	}
-}
-
-// FprintlnFunc returns a function that wraps Fprintln.
-func (v Color) FprintlnFunc() func(out writerValuer, a ...interface{}) {
-	return func(out writerValuer, a ...interface{}) {
-		_, _ = v.Fprintln(out, a...)
-	}
-}
-
-// PrintFunc returns a wrapper function for Print.
-func (v Color) PrintFunc() func(a ...interface{}) {
-	return func(a ...interface{}) {
-		_, _ = v.Print(a...)
-	}
-}
-
-// PrintfFunc returns a wrapper function for Printf.
-func (v Color) PrintfFunc() func(format string, a ...interface{}) {
-	return func(format string, a ...interface{}) {
-		_, _ = v.Printf(format, a...)
-	}
-}
-
-// PrintlnFunc returns a wrapper function for Println.
-func (v Color) PrintlnFunc() func(a ...interface{}) {
-	return func(a ...interface{}) {
-		_, _ = v.Println(a...)
-	}
 }
 
 // SprintFunc returns function that wraps Sprint.
@@ -191,77 +88,68 @@ func (v Color) SprintlnFunc() func(a ...interface{}) string {
 	}
 }
 
-func (v Color) wrap(s string) string {
+func (v Color) wrap(s ...string) string {
 	var b strings.Builder
 	b.Grow(len(v.colorStart) + len(s) + len(colorReset))
 	b.WriteString(v.colorStart)
-	b.WriteString(s)
+	for i := 0; i < len(s); i++ {
+		b.WriteString(s[i])
+	}
 	b.WriteString(colorReset)
 	return b.String()
 }
 
-func colorPrint(out writerValuer, format string, attr Attribute, a ...interface{}) {
-	v := out.value(attr)
-	if !strings.HasSuffix(format, lineFeed) {
-		_, _ = fmt.Fprint(out, v.Sprintf(format, a...)+lineFeed)
-		return
-	}
-	_, _ = v.Fprintf(out, format, a...)
-}
-
-var cache *colorCache = newValueCache(Stdout())
-
 func colorString(format string, attr Attribute, a ...interface{}) string {
-	return cache.value(attr).Sprintf(format, a...)
+	return cache().value(attr).Sprintf(format, a...)
 }
 
 // Black helper to produce black text to stdout.
-func Black(format string, a ...interface{}) { colorPrint(Stdout(), format, FgBlack, a...) }
+func Black(format string, a ...interface{}) { Stdout().colorPrint(format, FgBlack, a...) }
 
 // BlackE helper to produce black text to stderr.
-func BlackE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgBlack, a...) }
+func BlackE(format string, a ...interface{}) { Stderr().colorPrint(format, FgBlack, a...) }
 
 // Red helper to produce red text to stdout.
-func Red(format string, a ...interface{}) { colorPrint(Stdout(), format, FgRed, a...) }
+func Red(format string, a ...interface{}) { Stdout().colorPrint(format, FgRed, a...) }
 
 // RedE helper to produce red text to stderr.
-func RedE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgRed, a...) }
+func RedE(format string, a ...interface{}) { Stderr().colorPrint(format, FgRed, a...) }
 
 // Green helper to produce green text to stdout.
-func Green(format string, a ...interface{}) { colorPrint(Stdout(), format, FgGreen, a...) }
+func Green(format string, a ...interface{}) { Stdout().colorPrint(format, FgGreen, a...) }
 
 // GreenE helper to produce green text to stderr.
-func GreenE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgGreen, a...) }
+func GreenE(format string, a ...interface{}) { Stderr().colorPrint(format, FgGreen, a...) }
 
 // Yellow helper to produce yellow text to stdout.
-func Yellow(format string, a ...interface{}) { colorPrint(Stdout(), format, FgYellow, a...) }
+func Yellow(format string, a ...interface{}) { Stdout().colorPrint(format, FgYellow, a...) }
 
 // YellowE helper to produce yellow text to stderr.
-func YellowE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgYellow, a...) }
+func YellowE(format string, a ...interface{}) { Stderr().colorPrint(format, FgYellow, a...) }
 
 // Blue helper to produce blue text to stdout.
-func Blue(format string, a ...interface{}) { colorPrint(Stdout(), format, FgBlue, a...) }
+func Blue(format string, a ...interface{}) { Stdout().colorPrint(format, FgBlue, a...) }
 
 // BlueE helper to produce blue text to stderr.
-func BlueE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgBlue, a...) }
+func BlueE(format string, a ...interface{}) { Stderr().colorPrint(format, FgBlue, a...) }
 
 // Magenta helper to produce magenta text to stdout.
-func Magenta(format string, a ...interface{}) { colorPrint(Stdout(), format, FgMagenta, a...) }
+func Magenta(format string, a ...interface{}) { Stdout().colorPrint(format, FgMagenta, a...) }
 
 // MagentaE produces magenta text to stderr.
-func MagentaE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgMagenta, a...) }
+func MagentaE(format string, a ...interface{}) { Stderr().colorPrint(format, FgMagenta, a...) }
 
 // Cyan helper to produce cyan text to stdout.
-func Cyan(format string, a ...interface{}) { colorPrint(Stdout(), format, FgCyan, a...) }
+func Cyan(format string, a ...interface{}) { Stdout().colorPrint(format, FgCyan, a...) }
 
 // CyanE helper to produce cyan text to stderr.
-func CyanE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgCyan, a...) }
+func CyanE(format string, a ...interface{}) { Stderr().colorPrint(format, FgCyan, a...) }
 
 // White helper to produce white text to stdout.
-func White(format string, a ...interface{}) { colorPrint(Stdout(), format, FgWhite, a...) }
+func White(format string, a ...interface{}) { Stdout().colorPrint(format, FgWhite, a...) }
 
 // WhiteE helper to produce white text to stderr.
-func WhiteE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgWhite, a...) }
+func WhiteE(format string, a ...interface{}) { Stderr().colorPrint(format, FgWhite, a...) }
 
 // BlackString returns a string decorated with black attributes.
 func BlackString(format string, a ...interface{}) string { return colorString(format, FgBlack, a...) }
@@ -290,52 +178,52 @@ func CyanString(format string, a ...interface{}) string { return colorString(for
 func WhiteString(format string, a ...interface{}) string { return colorString(format, FgWhite, a...) }
 
 // HiBlack helper to produce black text to stdout.
-func HiBlack(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiBlack, a...) }
+func HiBlack(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiBlack, a...) }
 
 // HiBlackE helper to produce black text to stderr.
-func HiBlackE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiBlack, a...) }
+func HiBlackE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiBlack, a...) }
 
 // HiRed helper to write high contrast red text to stdout.
-func HiRed(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiRed, a...) }
+func HiRed(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiRed, a...) }
 
 // HiRedE helper to write high contrast red text to stderr.
-func HiRedE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiRed, a...) }
+func HiRedE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiRed, a...) }
 
 // HiGreen helper writes high contrast green text to stdout.
-func HiGreen(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiGreen, a...) }
+func HiGreen(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiGreen, a...) }
 
 // HiGreenE helper writes high contrast green text to stderr.
-func HiGreenE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiGreen, a...) }
+func HiGreenE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiGreen, a...) }
 
 // HiYellow helper writes high contrast yellow text to stdout.
-func HiYellow(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiYellow, a...) }
+func HiYellow(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiYellow, a...) }
 
 // HiYellowE helper writes high contrast yellow text to stderr.
-func HiYellowE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiYellow, a...) }
+func HiYellowE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiYellow, a...) }
 
 // HiBlue helper writes high contrast blue text to stdout.
-func HiBlue(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiBlue, a...) }
+func HiBlue(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiBlue, a...) }
 
 // HiBlueE helper writes high contrast blue text to stderr.
-func HiBlueE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiBlue, a...) }
+func HiBlueE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiBlue, a...) }
 
 // HiMagenta writes high contrast magenta text to stdout.
-func HiMagenta(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiMagenta, a...) }
+func HiMagenta(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiMagenta, a...) }
 
 // HiMagentaE writes high contrast magenta text to stderr.
-func HiMagentaE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiMagenta, a...) }
+func HiMagentaE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiMagenta, a...) }
 
 // HiCyan writes high contrast cyan colored text to stdout.
-func HiCyan(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiCyan, a...) }
+func HiCyan(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiCyan, a...) }
 
 // HiCyanE writes high contrast contrast cyan colored text to stderr.
-func HiCyanE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiCyan, a...) }
+func HiCyanE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiCyan, a...) }
 
 // HiWhite writes high contrast white colored text to stdout.
-func HiWhite(format string, a ...interface{}) { colorPrint(Stdout(), format, FgHiWhite, a...) }
+func HiWhite(format string, a ...interface{}) { Stdout().colorPrint(format, FgHiWhite, a...) }
 
 // HiWhiteE writes high contrast white colored text to stderr.
-func HiWhiteE(format string, a ...interface{}) { colorPrint(Stderr(), format, FgHiWhite, a...) }
+func HiWhiteE(format string, a ...interface{}) { Stderr().colorPrint(format, FgHiWhite, a...) }
 
 // HiBlackString returns a high contrast black string.
 func HiBlackString(format string, a ...interface{}) string {

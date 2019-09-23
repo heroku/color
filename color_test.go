@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 	"testing"
 )
 
@@ -14,17 +13,12 @@ type helperFuncString func(fmt string, a ...interface{}) string
 
 type mockConsole struct {
 	bytes.Buffer
-	*colorCache
 }
 
-func newMockConsole() *mockConsole {
-	var mc mockConsole
-	vc := &colorCache{
-		cache:  make(colorMap),
-		parent: &mc,
+func newMockConsole(out io.Writer) *Console {
+	return &Console{
+		current: out,
 	}
-	mc.colorCache = vc
-	return &mc
 }
 
 func assertEqualS(t *testing.T, want, got string) {
@@ -63,8 +57,10 @@ func TestColor(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.text, func(t *testing.T) {
 			t.Run(tc.text+" print", func(t *testing.T) {
-				buff := newMockConsole()
-				f := NewWithWriter(buff, tc.code).PrintFunc()
+				cache().clear()
+				var buff bytes.Buffer
+				cons := newMockConsole(&buff)
+				f := cons.PrintFunc(New(tc.code))
 				f(tc.text)
 				got := buff.String()
 				t.Log(got)
@@ -77,12 +73,14 @@ func TestColor(t *testing.T) {
 			})
 
 			t.Run(tc.text+" printf", func(t *testing.T) {
-				buff := newMockConsole()
-				f := NewWithWriter(buff, tc.code).PrintfFunc()
-				f("%q", tc.text)
+				cache().clear()
+				var buff bytes.Buffer
+				cons := newMockConsole(&buff)
+				f := cons.PrintfFunc(New(tc.code))
+				f(tc.text)
 				got := buff.String()
 				t.Log(got)
-				want := fmt.Sprintf("%s%sm%q%s0m", escape, tc.code, tc.text, escape)
+				want := fmt.Sprintf("%s%sm%s%s0m", escape, tc.code, tc.text, escape)
 				if got != want {
 					t.Logf("got  %q", got)
 					t.Logf("want %q", want)
@@ -91,8 +89,11 @@ func TestColor(t *testing.T) {
 			})
 
 			t.Run(tc.text+" println", func(t *testing.T) {
-				buff := newMockConsole()
-				NewWithWriter(buff, tc.code).PrintlnFunc()(tc.text)
+				cache().clear()
+				var buff bytes.Buffer
+				cons := newMockConsole(&buff)
+				f := cons.PrintlnFunc(New(tc.code))
+				f(tc.text)
 				got := buff.String()
 				t.Log(got)
 				want := fmt.Sprintf("%s%sm%s%s0m\n", escape, tc.code, tc.text, escape)
@@ -107,58 +108,15 @@ func TestColor(t *testing.T) {
 	}
 }
 
-func TestIoFuncs(t *testing.T) {
-	t.Parallel()
-	tt := []struct {
-		name string
-		test func(out writerValuer, v *Color)
-		want string
-	}{
-		{
-			name: "FprintFunc",
-			test: func(out writerValuer, v *Color) {
-				v.FprintFunc()(out, "white sprint")
-			},
-			want: "\x1b[37mwhite sprint\x1b[0m",
-		},
-		{
-			name: "FprintfFunc",
-			test: func(out writerValuer, v *Color) {
-				v.FprintfFunc()(out, "%q", "white sprintf")
-			},
-			want: "\x1b[37m\"white sprintf\"\x1b[0m",
-		},
-		{
-			name: "FprintlnFunc",
-			test: func(out writerValuer, v *Color) {
-				v.FprintlnFunc()(out, "white sprintln")
-			},
-			want: "\x1b[37mwhite sprintln\x1b[0m\n",
-		},
-	}
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			out := newMockConsole()
-			v := NewWithWriter(newMockConsole(), FgWhite)
-			tc.test(out, v)
-			got := out.String()
-			t.Log(got)
-			if got != tc.want {
-				t.Logf("want %q", tc.want)
-				t.Logf("got  %q", got)
-				t.Fatal()
-			}
-		})
-	}
-}
-
 func TestMultiAttribute(t *testing.T) {
 	t.Parallel()
-	out := newMockConsole()
-	v := NewWithWriter(out, FgWhite, Bold, Underline)
-	_, _ = v.Print("bold white")
+	cache().clear()
+	var buff bytes.Buffer
+	cons := newMockConsole(&buff)
+	col := New(FgWhite, Bold, Underline)
+	_, _ = cons.Print(col, "bold white")
 	want := "\x1b[37;1;4mbold white\x1b[0m"
-	got := out.String()
+	got := buff.String()
 	t.Log(got)
 	if got != want {
 		t.Fatalf("want %q got %q", want, got)
@@ -167,11 +125,13 @@ func TestMultiAttribute(t *testing.T) {
 
 func TestMissingAttribute(t *testing.T) {
 	t.Parallel()
-	out := newMockConsole()
-	v := NewWithWriter(out)
-	_, _ = v.Print("no color")
+	cache().clear()
+	var buff bytes.Buffer
+	cons := newMockConsole(&buff)
+	col := New()
+	_, _ = cons.Print(col, "no color")
 	want := "\x1b[0mno color\x1b[0m"
-	got := out.String()
+	got := buff.String()
 	t.Log(got)
 	if got != want {
 		t.Fatalf("want %q got %q", want, got)
@@ -296,31 +256,11 @@ func BenchmarkColorFuncsParallel(b *testing.B) {
 			Black("hello from %s xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "black")
 			Green("hello from %s yyyyyhfhhdhehehehehhskdkdkdkdkdkdkdkkkekkekekekeekekkk", "green")
 			Red("hello from %q.  i'm %d", "red", 23)
-			Black("more blach stuff")
+			Black("more black stuff")
 			Green("hello from %s xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "green")
 			Red("hello from %q.  i'm %d", "red", 23)
 		}
 	})
-}
-
-type mockWriter struct {
-	*colorCache
-	w io.Writer
-}
-
-func newMockWriter(w io.Writer) *mockWriter {
-	var mc mockWriter
-	vc := &colorCache{
-		cache:  make(colorMap),
-		parent: &mc,
-	}
-	mc.colorCache = vc
-	mc.w = w
-	return &mc
-}
-
-func (w *mockWriter) Write(b []byte) (int, error) {
-	return w.Write(b)
 }
 
 func BenchmarkColorStruct(b *testing.B) {
@@ -335,13 +275,13 @@ func BenchmarkColorStruct(b *testing.B) {
 		FgWhite,
 	}
 
-	cons := NewConsole(os.Stdout)
-	cons.current = ioutil.Discard
+	cons := newMockConsole(ioutil.Discard)
+	cache().clear()
 
 	for i := 0; i < b.N; i++ {
 		for i := 0; i < 100; i++ {
-			w := NewWithWriter(cons, attrs...)
-			w.Println("jjjjjjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjjf")
+			col := New(attrs...)
+			cons.Print(col, "jjjjjjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjfjjf")
 		}
 	}
 }
@@ -353,7 +293,8 @@ func ExampleRed() {
 
 func ExampleColor_Println() {
 	// Output underlined white text to stdout.
-	New(FgWhite, Underline).Println("I'm underlined and white!")
+	clr := New(FgWhite, Underline)
+	Stdout().Println(clr, "I'm underlined and white!")
 }
 
 func ExampleColor_SprintFunc() {

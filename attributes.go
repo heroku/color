@@ -7,12 +7,12 @@ import (
 // Attribute defines a single SGR Code.
 type Attribute uint64
 
-// Code converts numeric Attribute to a string that can be used to set display attributes.
+// String returns color code as a string.
 func (a Attribute) String() string {
 	return attributeToSGRCode[a]
 }
 
-// String supports Stringer interface for Attribute.
+// Name returns a human readable name for an Attribute.
 func (a Attribute) Name() string {
 	m := map[Attribute]string{
 		Reset:        "Reset",
