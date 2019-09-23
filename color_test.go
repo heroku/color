@@ -291,7 +291,7 @@ func ExampleRed() {
 	Red("Hello red!")
 }
 
-func ExampleColor_Println() {
+func ExampleConsole_Println() {
 	// Output underlined white text to stdout.
 	clr := New(FgWhite, Underline)
 	Stdout().Println(clr, "I'm underlined and white!")
