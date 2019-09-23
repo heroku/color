@@ -3,10 +3,10 @@ PROJECT_ROOT := $(shell pwd)
 .PHONY: test bench fmt lint
 
 test:
-	@go test -race -coverprofile c.out -cpuprofile=cpu2.prof github.com/murphybytes/color
+	@go test -race -coverprofile c.out -cpuprofile=cpu2.prof github.com/heroku/color
 
 bench:
-	@go test -bench=. -count=5  -cpu=1,2,4,8 -cpuprofile=cpu.prof github.com/murphybytes/color
+	@go test -bench=. -count=5  -cpu=1,2,4,8 -cpuprofile=cpu.prof github.com/heroku/color
 
 cover: test
 	@go tool cover -html=c.out

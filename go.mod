@@ -1,4 +1,4 @@
-module github.com/murphybytes/color
+module github.com/heroku/color
 
 go 1.13
 
