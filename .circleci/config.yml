@@ -33,10 +33,4 @@ workflows:
   main:
     jobs:
       - build:
-          filters:  # required since `publish` has tag filters AND requires `build`
-            tags:
-              only: /.*/
       - buildwin:
-          filters:  # required since `publish` has tag filters AND requires `buildwin`
-            tags:
-              only: /.*/
