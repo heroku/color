@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/murphybytes/color"
+	"github.com/heroku/color"
 )
 
 func main() {
@@ -13,14 +13,14 @@ func main() {
 	color.HiCyan("hello cyan %d", 10)
 
 	emphasized := color.New(color.FgBlue, color.FgRed, color.Bold).SprintFunc()
-	fmt.Fprintln(color.Stdout(), "Wow! This is", emphasized("exciting!"))
+	_, _ = fmt.Fprintln(color.Stdout(), "Wow! This is", emphasized("exciting!"))
 
-	color.Stdout().Println(color.New(), "no color at all")
+	_, _ = color.Stdout().Println(color.New(), "no color at all")
 	c := color.New(color.FgHiMagenta)
 	color.Stdout().Set(c)
 	fmt.Println("magenta?")
-	fmt.Fprintln(color.Stdout(), "defin magenta")
+	_, _ = fmt.Fprintln(color.Stdout(), "defin magenta")
 	color.Stdout().Unset()
-	fmt.Fprintln(color.Stdout(), "should be normal")
+	_, _ = fmt.Fprintln(color.Stdout(), "should be normal")
 
 }
