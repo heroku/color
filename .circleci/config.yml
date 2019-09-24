@@ -15,8 +15,6 @@ jobs:
     docker:
       - image: circleci/golang:1.13
     working_directory: /go/src/github.com/heroku/color
-    environment:
-      CC_TEST_REPORTER_ID: 623f1378dffaba40f60e316152d37a13383ce7dc7f09555cbd54ed46179b1f71
     steps:
       - checkout
       - run:
