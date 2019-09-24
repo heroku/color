@@ -3,7 +3,7 @@ run:
 
 linter-settings:
   goimports:
-    local-prefixes: github.com/heroku/builder
+    local-prefixes: github.com/heroku/code
   lll:
     line-length: 110
 
@@ -21,3 +21,6 @@ issues:
       linters:
         - scopelint
         - funlen
+    - path: color\.go
+      linters:
+        - gocritic

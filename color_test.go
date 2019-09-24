@@ -11,10 +11,6 @@ import (
 type helperFunc func(fmt string, a ...interface{})
 type helperFuncString func(fmt string, a ...interface{}) string
 
-type mockConsole struct {
-	bytes.Buffer
-}
-
 func newMockConsole(out io.Writer) *Console {
 	return &Console{
 		current: out,
@@ -294,7 +290,7 @@ func ExampleRed() {
 func ExampleConsole_Println() {
 	// Output underlined white text to stdout.
 	clr := New(FgWhite, Underline)
-	Stdout().Println(clr, "I'm underlined and white!")
+	_, _ = Stdout().Println(clr, "I'm underlined and white!")
 }
 
 func ExampleColor_SprintFunc() {

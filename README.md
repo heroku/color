@@ -1,4 +1,4 @@
-# Color [![GoDoc](https://godoc.org/github.com/heroku/color?status.svg)](https://godoc.org/github.com/heroku/color)
+# Color [![GoDoc](https://godoc.org/github.com/heroku/color?status.svg)](https://godoc.org/github.com/heroku/color) [![CircleCI](https://circleci.com/gh/heroku/color.svg?style=svg)](https://circleci.com/gh/heroku/color)
 
 Color is based on the [github.com/fatih/color](https://github.com/fatih/color) package. Unfortunately the original
 color package is archived and is no longer supported. Like the original, this package lets you use colorized outputs in 

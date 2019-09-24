@@ -1,6 +1,6 @@
 goos: darwin
 goarch: amd64
-pkg: github.com/murphybytes/color
+pkg: github.com/heroku/color
 BenchmarkColorStruct     	   53320	     22724 ns/op
 BenchmarkColorStruct     	   53731	     22453 ns/op
 BenchmarkColorStruct     	   54000	     23309 ns/op
@@ -22,4 +22,4 @@ BenchmarkColorStruct-8   	   47841	     23966 ns/op
 BenchmarkColorStruct-8   	   55423	     22346 ns/op
 BenchmarkColorStruct-8   	   51176	     20377 ns/op
 PASS
-ok  	github.com/murphybytes/color	28.651s
+ok  	github.com/heroku/color	28.651s

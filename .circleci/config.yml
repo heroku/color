@@ -1,0 +1,44 @@
+version: 2.1
+orbs:
+  win: circleci/windows@1.0.0
+jobs:
+  buildwin:
+    executor: win/vs2019
+    environment:
+      CGO_ENABLED: "0"
+    steps:
+      - checkout
+      - run:
+          name: Run tests
+          command: go test ./...
+  build:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: /go/src/github.com/heroku/color
+    environment:
+      CC_TEST_REPORTER_ID: 623f1378dffaba40f60e316152d37a13383ce7dc7f09555cbd54ed46179b1f71
+    steps:
+      - checkout
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            # download test reporter as a static binary
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+            ./cc-test-reporter before-build
+      - run:
+          name: Run tests and linter
+          command: |
+            make test lint
+            ./cc-test-reporter after-build --exit-code $?
+workflows:
+  main:
+    jobs:
+      - build:
+          filters:  # required since `publish` has tag filters AND requires `build`
+            tags:
+              only: /.*/
+      - buildwin:
+          filters:  # required since `publish` has tag filters AND requires `buildwin`
+            tags:
+              only: /.*/
