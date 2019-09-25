@@ -11,6 +11,23 @@ import (
 	"github.com/mattn/go-colorable"
 )
 
+var noColor bool
+var noColorLock sync.RWMutex
+
+// Disable is used to turn color output on and off globally.
+func Disable(flag bool) {
+	noColorLock.Lock()
+	defer noColorLock.Unlock()
+	noColor = flag
+}
+
+// Enabled returns flag indicating whether colors are enabled or not.
+func Enabled() bool {
+	noColorLock.RLock()
+	defer noColorLock.RUnlock()
+	return !noColor
+}
+
 var stdout *Console // Don't use directly use Stdout() instead.
 var stdoutOnce sync.Once
 
@@ -47,11 +64,16 @@ func NewConsole(out *os.File) *Console {
 		colored:    colorable.NewColorable(out),
 		noncolored: colorable.NewNonColorable(out),
 	}
-	c.current = c.colored
+	if Enabled() {
+		c.current = c.colored
+		return c
+	}
+	c.current = c.noncolored
 	return c
 }
 
-// DisableColors if strip is true ANSI color information will be removed. Otherwise it will be included.
+// DisableColors if true ANSI color information will be removed for this console object. Passing true will enable
+// colors for this Console, even if colors are disabled globally.
 func (c *Console) DisableColors(strip bool) {
 	c.Lock()
 	defer c.Unlock()

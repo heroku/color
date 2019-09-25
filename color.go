@@ -49,18 +49,29 @@ func New(attrs ...Attribute) *Color {
 
 // Sprint returns text decorated with the display Attributes passed to Color constructor function.
 func (v Color) Sprint(a ...interface{}) string {
-	return v.wrap(fmt.Sprint(a...))
+	if Enabled() {
+		return v.wrap(fmt.Sprint(a...))
+	}
+	return fmt.Sprint(a...)
 }
 
 // Sprint formats according to the format specifier and returns text decorated with the display Attributes
 // passed to Color constructor function.
 func (v Color) Sprintf(format string, a ...interface{}) string {
-	return v.wrap(fmt.Sprintf(format, a...))
+	if Enabled() {
+		return v.wrap(fmt.Sprintf(format, a...))
+	}
+	return fmt.Sprintf(format, a...)
 }
 
 // Sprint returns text decorated with the display Attributes and terminated by a line feed.
 func (v Color) Sprintln(a ...interface{}) string {
-	s := v.wrap(fmt.Sprint(a...))
+	var s string
+	if Enabled() {
+		s = v.wrap(fmt.Sprint(a...))
+	} else {
+		s = fmt.Sprint(a...)
+	}
 	if !strings.HasSuffix(s, lineFeed) {
 		s += lineFeed
 	}

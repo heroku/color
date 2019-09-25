@@ -2,10 +2,13 @@ package color
 
 import (
 	"bytes"
+	"io"
+	"os"
 	"testing"
 )
 
 func TestConsoleWrite(t *testing.T) {
+	t.Parallel()
 	var out bytes.Buffer
 	c := Console{
 		current: &out,
@@ -23,6 +26,7 @@ func TestConsoleWrite(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
+	t.Parallel()
 	var cons Console
 	var buff bytes.Buffer
 	cons.current = &buff
@@ -35,6 +39,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestUnset(t *testing.T) {
+	t.Parallel()
 	var cons Console
 	var buff bytes.Buffer
 	cons.current = &buff
@@ -42,4 +47,53 @@ func TestUnset(t *testing.T) {
 	if buff.String() != colorReset {
 		t.Fatalf("got %q want %q", buff.String(), colorReset)
 	}
+}
+
+func mockStd() (*Console, func() string) {
+	r, w, _ := os.Pipe()
+	console := NewConsole(w)
+	return console, func() string {
+		_ = w.Close()
+		var b bytes.Buffer
+		_, _ = io.Copy(&b, r)
+		_ = r.Close()
+		return b.String()
+	}
+}
+
+func TestDisable(t *testing.T) {
+	// can't be parallel since we're toggling global color which will interfere with concurrently running tests
+	Disable(true)
+	defer func() {
+		Disable(false)
+	}()
+	cons, outf := mockStd()
+	c := New(FgRed)
+	_, _ = cons.Print(c, "foo")
+	assertEqualS(t, outf(), "foo")
+}
+
+func TestEnable(t *testing.T) {
+	cons, outf := mockStd()
+	c := New(FgRed)
+	_, _ = cons.Print(c, "foo")
+	_, _ = cons.Println(c, "bar")
+	_, _ = cons.Printf(c, "%d", 32)
+	want := "\x1b[31mfoo\x1b[0m\x1b[31mbar\x1b[0m\n\x1b[31m32\x1b[0m"
+	assertEqualS(t, outf(), want)
+}
+
+func TestConsoleEnable(t *testing.T) {
+	// can't be parallel since we're toggling global color which will interfere with concurrently running tests
+	Disable(true)
+	defer func() {
+		Disable(false)
+	}()
+	cons, outf := mockStd()
+	c := New(FgRed)
+	_, _ = cons.Print(c, "foo")
+	cons.DisableColors(false)
+	_, _ = cons.Print(c, "bar")
+	want := "foo\x1b[31mbar\x1b[0m"
+	assertEqualS(t, outf(), want)
 }

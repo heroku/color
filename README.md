@@ -15,13 +15,13 @@ results in better concurrency support and improved performance.
 
 You don't need to remember to wrap io.Writer arguments in `colorable.NewColorable` in order to support Windows functionality.
 
-Package public global variables are removed.  `color.NoColor` was removed. Colored output can be disabled using 
-the `Console.DisableColors` method instead. `color.Output` and `color.Error` were removed, use `Stdout()` and `Stderr()` 
-instead.  
+Package public global variables are removed.  `color.NoColor` was removed and replaced with the `Disable` function.
+ Colored output can be toggled using the `Disable`. `color.Output` and `color.Error`replaced by `Stdout()` and `Stderr()` 
+.  
 
 Instances of `Console` can be passed to methods in third party packages that take `io.Writer` as an argument. If the 
  third party package emits ANSI color information the passed in writer will be interpreted correctly on Windows. In 
- addition, color information can be stripped by calling `Console.DisableColors(true)`.
+ addition, color information can be stripped for a console by calling `Console.DisableColors(true)`.
 
 Performance is improved significantly, as much as 400%.  Note that some functions that you'd expect to take an 
 array of interface{} take an array of strings instead because underlying calls to fmt.SprintXX functions are slow. 
