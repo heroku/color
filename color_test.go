@@ -26,6 +26,38 @@ func assertEqualS(t *testing.T, want, got string) {
 	}
 }
 
+func TestColorEnabled(t *testing.T) {
+	t.Parallel()
+	c := New(FgRed)
+	got := c.Sprint("foo")
+	want := fmt.Sprintf("%s%smfoo%s", escape, attributeToSGRCode[FgRed], colorReset)
+	assertEqualS(t, want, got)
+	got = c.Sprintf("foo %d", 2)
+	want = fmt.Sprintf("%s%smfoo 2%s", escape, attributeToSGRCode[FgRed], colorReset)
+	assertEqualS(t, want, got)
+	got = c.Sprintln("foo")
+	want = fmt.Sprintf("%s%smfoo%s\n", escape, attributeToSGRCode[FgRed], colorReset)
+	assertEqualS(t, want, got)
+}
+
+func TestColorDisabled(t *testing.T) {
+	// can't be parallel since we're toggling global color which will interfere with concurrently running tests
+	Disable(true)
+	defer func() {
+		Disable(false)
+	}()
+	c := New(FgRed)
+	got := c.Sprint("foo")
+	want := fmt.Sprint("foo")
+	assertEqualS(t, want, got)
+	got = c.Sprintf("foo %d", 3)
+	want = fmt.Sprintf("foo %d", 3)
+	assertEqualS(t, want, got)
+	got = c.Sprintln("foo")
+	want = fmt.Sprintln("foo")
+	assertEqualS(t, want, got)
+}
+
 func TestColor(t *testing.T) {
 	t.Parallel()
 	tt := []struct {
