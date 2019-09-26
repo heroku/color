@@ -53,16 +53,18 @@ func Stderr() *Console {
 // Console manages state for output, typically stdout or stderr.
 type Console struct {
 	sync.Mutex
-	colored    io.Writer
-	noncolored io.Writer
-	current    io.Writer
+	colored        io.Writer
+	noncolored     io.Writer
+	current        io.Writer
+	fileDescriptor uintptr
 }
 
 // NewConsole creates a wrapper around out which will output platform independent colored text.
 func NewConsole(out *os.File) *Console {
 	c := &Console{
-		colored:    colorable.NewColorable(out),
-		noncolored: colorable.NewNonColorable(out),
+		colored:        colorable.NewColorable(out),
+		noncolored:     colorable.NewNonColorable(out),
+		fileDescriptor: out.Fd(),
 	}
 	if Enabled() {
 		c.current = c.colored
@@ -70,6 +72,12 @@ func NewConsole(out *os.File) *Console {
 	}
 	c.current = c.noncolored
 	return c
+}
+
+func (c *Console) Fd() uintptr {
+	c.Lock()
+	defer c.Unlock()
+	return c.fileDescriptor
 }
 
 // DisableColors if true ANSI color information will be removed for this console object. Passing true will enable

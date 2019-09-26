@@ -97,3 +97,10 @@ func TestConsoleEnable(t *testing.T) {
 	want := "foo\x1b[31mbar\x1b[0m"
 	assertEqualS(t, outf(), want)
 }
+
+func TestFileDescriptor(t *testing.T) {
+	c := NewConsole(os.Stdout)
+	if c.Fd() != os.Stdout.Fd() {
+		t.Fatalf("fd mismatch stdout %X console %X", os.Stdout.Fd(), c.Fd())
+	}
+}
