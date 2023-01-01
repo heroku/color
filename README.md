@@ -107,3 +107,4 @@ color.Stdout().DisableColors(*flagNoColor)
 The MIT License (MIT) - see [`LICENSE.md`](https://github.com/heroku/color/blob/master/LICENSE) for more details
 
 
+test

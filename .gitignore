@@ -13,4 +13,4 @@
 .idea/
 c.out
 *.test
-*.prof
+*.prof.git/
